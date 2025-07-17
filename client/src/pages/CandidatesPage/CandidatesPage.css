@@ -1,0 +1,248 @@
+.candidates-root {
+  padding: 32px 24px;
+  /* background: #f7f8fd; */
+  min-height: 100vh;
+}
+.sidebar-divider {
+  margin:3% 0 !important;
+  border-color: #f0f1f6;
+}
+.candidates-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.candidates-title {
+  font-weight: bold;
+  margin-bottom: 2px;
+  text-align: left;
+}
+
+.candidates-subtitle {
+  color: #7a7a7a;
+}
+
+.candidates-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.export-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+.invite-btn {
+  background: linear-gradient(90deg, #6c47ff 0%, #6c8cff 100%) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+}
+
+.candidates-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.upload-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: bold !important;
+  padding: 0.5% !important;
+  width: 70%;
+  color: black !important;
+  border: #d8d8d8 1px solid !important;
+}
+
+.candidate-select {
+  text-align: left;
+    width: 30%;
+
+}
+.save-can-btn {
+  background: linear-gradient(90deg, #6c47ff 0%, #6c8cff 100%) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  width: 30%;
+}
+.filters-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+.candidates-count-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.candidates-count {
+  color: #7a7a7a;
+}
+
+.view-toggle-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: bold !important;
+  margin-left: 10px;
+  margin-right: 25px !important;
+  min-width: 90px;
+  color: black !important;
+  border: #d8d8d8 1px solid !important;
+
+}
+
+.candidates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.candidate-card {
+  background: #fff;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(108, 71, 255, 0.04);
+  padding: 1%;
+  border: #d8d8d8 1px solid;
+}
+
+.candidate-card-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 24px;
+}
+
+.candidate-avatar {
+  width: 56px !important;
+  height: 56px !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  background: linear-gradient(90deg, #6c47ff 0%, #6c8cff 100%);
+}
+
+.candidate-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.candidate-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.candidate-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.candidate-chip-new {
+  background: #e0e7ff !important;
+  color: #2563eb !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+}
+
+.candidate-chip-reviewed {
+  background: #fff7e0 !important;
+  color: #f59e42 !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+}
+
+.candidate-role {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.candidate-desc {
+  color: #7a7a7a;
+}
+
+.candidate-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: #7a7a7a;
+  font-size: 0.97rem;
+  margin: 4px 0;
+}
+
+.css-18jp67o-MuiNativeSelect-root-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input {
+    padding: 2% !important;
+}
+
+.candidate-tags {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.candidate-tag {
+  background: #f3f4f6 !important;
+  color: #222 !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border-radius: 6px !important;
+}
+
+.candidate-education {
+  color: #7a7a7a;
+  margin-top: 2px;
+}
+
+.candidate-score-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 90px;
+  gap: 4px;
+}
+
+.candidate-score {
+  font-weight: 700;
+  font-size: 2rem;
+}
+
+.candidate-score-label {
+  color: #7a7a7a;
+  font-weight: 500;
+}
+
+.candidate-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .candidates-root {
+    padding: 16px 4px;
+  }
+  .candidate-card-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  .candidate-score-col {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+}

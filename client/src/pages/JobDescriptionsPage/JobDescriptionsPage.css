@@ -1,0 +1,222 @@
+.jd-root {
+  padding: 32px 24px;
+  min-height: 100vh;
+}
+
+.jd-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.jd-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.jd-subtitle {
+  color: #7a7a7a;
+}
+
+.jd-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.import-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+.new-job-btn {
+  background: linear-gradient(90deg, #6c47ff 0%, #6c8cff 100%) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+}
+
+.jd-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.upload-jd-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: bold !important;
+  padding: 0.5% !important;
+  width: 70%;
+  color: black !important;
+  border: #d8d8d8 1px solid !important;
+}
+.css-18jp67o-MuiNativeSelect-root-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input {
+    padding: 2% !important;
+}
+.jd-select {
+ width: 30%;
+ text-align: left;
+}
+
+.jd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.jd-card {
+  background: #fff;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(108, 71, 255, 0.04);
+  padding: 1%;
+  border: #d8d8d8 1px solid;
+}
+.submit-jd-btn{
+    background: linear-gradient(90deg, #6c47ff 0%, #6c8cff 100%) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  width: 30%;
+}
+.jd-card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 24px;
+}
+
+.jd-card-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.jd-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.jd-job-title {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.jd-chip-active {
+  background: #e0ffe0 !important;
+  color: #22c55e !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+}
+
+.jd-chip-draft {
+  background: #fff7e0 !important;
+  color: #f59e42 !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+}
+
+.jd-card-meta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: #7a7a7a;
+  font-size: 0.97rem;
+  margin: 10px 0;
+  text-align: left;
+  width: 70%;
+}
+
+.jd-desc {
+  color: #7a7a7a;
+  text-align: left;
+  font-size: 1.1rem !important; 
+}
+
+.jd-req-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.jd-req-label {
+  font-weight: 700;
+  text-align: left;
+}
+
+.jd-req-tags {
+  display: flex;
+  gap: 8px;
+}
+
+.jd-req-tag {
+  background: #f3f4f6 !important;
+  color: #222 !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border-radius: 6px !important;
+}
+
+.jd-posted {
+  color: #7a7a7a;
+  margin-top: 2px;
+  text-align: left;
+}
+
+.jd-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jd-card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 24px 18px 24px;
+}
+.sidebar-divider {
+  margin:3% 0 !important;
+  border-color: #f0f1f6;
+}
+
+.view-app-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  margin-right: 10px;
+}
+
+.share-job-btn {
+  background: linear-gradient(90deg, #6c47ff 0%, #6c8cff 100%) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+}
+
+@media (max-width: 900px) {
+  .jd-root {
+    padding: 16px 4px;
+  }
+  .jd-card-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  .jd-card-footer {
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 16px 12px 16px;
+  }
+}

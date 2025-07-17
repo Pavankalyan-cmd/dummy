@@ -1,0 +1,287 @@
+.topmatches-root {
+  padding: 32px 24px;
+  min-height: 100vh;
+}
+
+.topmatches-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.topmatches-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+}
+
+.topmatches-subtitle {
+  color: #7a7a7a;
+}
+
+.topmatches-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.export-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+.contact-btn {
+  background: linear-gradient(90deg, #6c47ff 0%, #6c8cff 100%) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+}
+
+.topmatches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.topmatch-card {
+  background: #fff;
+
+  border-left: 4px solid #2563eb !important;
+
+
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(108, 71, 255, 0.04);
+  padding: 1%;
+  border: #d8d8d8 1px solid;
+}
+
+.topmatch-card-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 24px;
+}
+.avatar-topmatch{
+
+  width: 7%;
+}
+.topmatch-avatar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 82px;
+ 
+}
+
+.topmatch-avatar {
+  
+  width: 56px !important;
+  height: 56px !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  background: linear-gradient(90deg, #6c47ff 0%, #6c8cff 100%);
+}
+
+.topmatch-rank-chip {
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+}
+
+.topmatch-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 80%;
+}
+
+.topmatch-header {
+  display: flex;
+  
+  align-items: baseline;
+  gap: 12px;
+}
+.topmatch-names{
+  text-align: left;
+  width: 40%;
+}
+.topmatch-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.topmatch-role {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.topmatch-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: #7a7a7a;
+  font-size: 0.97rem;
+  margin: 4px 0;
+}
+
+.topmatch-analysis {
+  margin-top: 8px;
+}
+
+.topmatch-analysis-title {
+  text-align: left;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.topmatch-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.topmatch-progress {
+  flex: 1;
+  height: 10px !important;
+  border-radius: 5px !important;
+}
+
+.topmatch-progress-label {
+  font-weight: 700;
+  color: #222;
+  min-width: 80px;
+  text-align: right;
+}
+
+.topmatch-analysis-details {
+  display: flex;
+  gap: 32px;
+  margin-top: 8px;
+}
+
+.topmatch-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.topmatch-tag {
+  background: #f3f4f6 !important;
+  color: #222 !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border-radius: 6px !important;
+}
+
+.topmatch-skill-tag {
+  background: #e0e7ff !important;
+  color: #2563eb !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border-radius: 6px !important;
+}
+
+.topmatch-achievements {
+  text-align: left;
+  margin-top: 28px;
+}
+
+.topmatch-achievements-title {
+  font-weight: 700;
+}
+
+.topmatch-achievements-list {
+  margin: 1%;
+  padding-left: 18px;
+  color: #222;
+}
+
+.topmatch-education-row {
+  display: flex;
+  text-align: left;
+  gap: 48px;
+  margin-top: 8px;
+}
+
+.topmatch-education-title,
+.topmatch-availability-title,
+.topmatch-salary-title {
+  font-weight: 700;
+}
+
+.topmatch-education {
+  color: #7a7a7a;
+}
+
+.topmatch-availability-chip {
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  margin-top: 2px;
+}
+
+.topmatch-salary {
+  color: #222;
+}
+
+.topmatch-lastactive {
+  color: #7a7a7a;
+  margin-top: 8px;
+}
+
+.topmatch-score-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 180px;
+  gap: 8px;
+}
+
+.topmatch-score {
+  font-weight: 700;
+  font-size: 2.2rem;
+}
+
+.topmatch-score-label {
+  color: #7a7a7a;
+  font-weight: 500;
+}
+
+.topmatch-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.topmatch-action-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  min-width: 160px;
+}
+
+@media (max-width: 900px) {
+  .topmatches-root {
+    padding: 16px 4px;
+  }
+  .topmatch-card-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  .topmatch-score-col {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+  .topmatch-education-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
