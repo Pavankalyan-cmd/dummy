@@ -2,12 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
-
+from routers import job_description
 
 from routers import candidates
 load_dotenv()
 app = FastAPI()
 app.include_router(candidates.router,prefix="/api")
+app.include_router(job_description.router,prefix="/api")
 
 # Clean and validate ALLOWED_ORIGINS
 origins_raw = os.getenv("ALLOWED_ORIGINS", "")

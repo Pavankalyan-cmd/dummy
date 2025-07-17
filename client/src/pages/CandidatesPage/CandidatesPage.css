@@ -113,6 +113,7 @@
   border-radius: 16px !important;
   box-shadow: 0 2px 8px rgba(108, 71, 255, 0.04);
   padding: 1%;
+
   border: #d8d8d8 1px solid;
 }
 
@@ -121,6 +122,7 @@
   align-items: flex-start;
   gap: 24px;
   padding: 24px;
+  width: 90% !important;
 }
 
 .candidate-avatar {
@@ -137,6 +139,7 @@
   flex-direction: column;
   gap: 6px;
   text-align: left;
+  width: 90% !important;
 }
 
 .candidate-header {
@@ -188,6 +191,7 @@
 
 .candidate-tags {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin: 6px 0;
 }

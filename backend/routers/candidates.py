@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
-from services.parser import extract_text_from_pdf, extract_text_from_docx
+from services.parser import extract_text_from_pdf, extract_text_from_docx,clean_spacing,clean_candidate_data
 from firebase_config import verify_firebase_token
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 from typing import List, Optional
 import google.generativeai as genai
 import os
@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import re
 from firebase_config import db
 import uuid
+import re
 
 # Load environment variables
 load_dotenv()
@@ -32,10 +33,10 @@ class Project(BaseModel):
 class Candidate(BaseModel):
     name: str
     designation: str
-    experience: str
+    experience: float = Field(..., description="Experience in years (e.g., 3.0)")
     contact_number: str
     email: str
-    Location: Optional[str]
+    location: Optional[str] = Field(None, alias="Location") 
     education: List[Education]
     technical_skills: List[str]
     key_achievements: List[str]
@@ -77,6 +78,11 @@ async def candidate_resumes(
 
         candidate_schema_json = Candidate.schema_json(indent=2)
         prompt = f"""
+        You are an information extraction engine.
+
+        Task: Read the resume text below and extract ONLY the information that is explicitly supported by the text. Do NOT guess or invent anything.
+
+        Output: return ONLY valid JSON. Do not include comments, markdown, or extra text.
         Extract the following candidate fields:
         - name
         - designation
@@ -100,19 +106,25 @@ async def candidate_resumes(
         \"\"\"
         """
 
-
-        response = model.generate_content(prompt)
+        generation_config = genai.types.GenerationConfig(
+        response_mime_type="application/json",
+        temperature=0.0,
+        max_output_tokens=2048,
+    )
+        response = model.generate_content(prompt,generation_config=generation_config)
         raw_output = getattr(response, "text", None)
 
 
         print("Gemini Raw Output:", repr(raw_output))
         cleaned_json_str = extract_json_from_response(raw_output)
         parsed_json = json.loads(cleaned_json_str)
-        candidate_data = Candidate.parse_obj(parsed_json)
-        # ✅ 1. Generate Unique ID
+        cleaned_data = clean_candidate_data(parsed_json)
+
+        candidate_data = Candidate.parse_obj(cleaned_data)
+     
         candidate_id = str(uuid.uuid4())
 
-        # ✅ 2. Upload Resume to Firebase Storage
+      
         # file_extension = resume.filename.split(".")[-1]
         # blob = bucket.blob(f"resumes/{candidate_id}.{file_extension}")
         # blob.upload_from_string(resume_content, content_type=resume.content_type)
@@ -120,15 +132,17 @@ async def candidate_resumes(
 
         # resume_url = blob.public_url
 
-        # ✅ 3. Save Candidate to Firestore
+
         candidate_dict = candidate_data.dict()
         candidate_dict.update({
             "uid": uid,
             # "resume_url": resume_url,
             "candidate_id": candidate_id
         })
+        print(candidate_dict)
 
-        db.collection("candidates").document(candidate_id).set(candidate_dict)
+        db.collection("users").document(uid).collection("candidates").document(candidate_id).set(candidate_dict)
+
 
         
 
@@ -149,19 +163,23 @@ async def candidate_resumes(
 @router.get("/candidate-resumes")
 async def get_candidate_resumes(request: Request):
     try:
-        # Verify Firebase user
-        uid = verify_firebase_token(request)
 
-        # Reference to candidate subcollection
+        uid = verify_firebase_token(request)
+        print(uid)
+
         candidates_ref = db.collection("users").document(uid).collection("candidates")
         docs = candidates_ref.stream()
 
         # Build response list
+        print("docs",docs)
         candidate_list = []
         for doc in docs:
+
             candidate = doc.to_dict()
+            print("candidate",candidate)
             candidate["id"] = doc.id  # Include doc ID for frontend usage
             candidate_list.append(candidate)
+            print("list",candidate_list)
 
         return {
             "status": "success",

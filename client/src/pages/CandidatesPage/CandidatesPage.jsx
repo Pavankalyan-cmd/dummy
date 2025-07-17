@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -9,7 +9,6 @@ import {
   Chip,
   IconButton,
   Divider,
-  CircularProgress,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
@@ -17,50 +16,29 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import { toast } from "react-toastify";
 
-import { candidateResume } from "../services/services";
+import { candidateResume, getCandidateResumes } from "../services/services";
 
 import "./CandidatesPage.css";
 
-const candidates = [
-  {
-    initials: "SJ",
-    name: "Sarah Johnson",
-    status: "new",
-    role: "Senior Software Engineer",
-    description:
-      "Experienced full-stack developer with expertise in React ecosystem and cloud technologies.",
-    email: "sarah.j@email.com",
-    phone: "+1 (555) 123-4567",
-    location: "San Francisco, CA",
-    applied: "2024-01-15",
-    tags: ["React", "TypeScript", "Node.js", "AWS", "Docker"],
-    education: "MS Computer Science – Stanford",
-    score: 95,
-    scoreColor: "#22C55E",
-  },
-  {
-    initials: "MC",
-    name: "Michael Chen",
-    status: "reviewed",
-    role: "Product Manager",
-    description:
-      "Strategic product leader with proven track record of launching successful digital products.",
-    email: "m.chen@email.com",
-    phone: "+1 (555) 234-5678",
-    location: "New York, NY",
-    applied: "2024-01-14",
-    tags: ["Strategy", "Analytics", "Leadership", "Agile", "SQL"],
-    education: "MBA – Harvard Business School",
-  },
-];
-
 export default function CandidatesPage() {
-  const [resumeFile, setResumeFile] = React.useState(null);
-  const [uploading, setUploading] = React.useState(false);
-  const [result, setResult] = React.useState(null);
-  const [selectedCandidate, setSelectedCandidate] = React.useState(
-    candidates[0].name
-  );
+  const [resumeFile, setResumeFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [candidates, setCandidates] = useState([]);
+
+  useEffect(() => {
+    const fetchCandidates = async () => {
+      try {
+        const data = await getCandidateResumes();
+        setCandidates(data);
+      } catch (err) {
+        console.error("Failed to fetch resumes:", err);
+        toast.error("Failed to fetch candidates.");
+      }
+    };
+
+    fetchCandidates();
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -68,32 +46,29 @@ export default function CandidatesPage() {
     setResult(null);
   };
 
-const handleSubmit = async () => {
-  if (!resumeFile) {
-    toast.warning("Please select a resume to upload.");
-    return;
-  }
+  const handleSubmit = async () => {
+    if (!resumeFile) {
+      toast.warning("Please select a resume to upload.");
+      return;
+    }
 
-  try {
-    setUploading(true);
-    toast.info("Uploading and analyzing resume...");
+    try {
+      setUploading(true);
+      toast.info("Uploading and analyzing resume...");
 
-    const res = await candidateResume(resumeFile);
-    setResult(res);
-    toast.success("Resume processed successfully!");
-
-    console.log("Resume analysis result:", res);
-  } catch (error) {
-    console.error("Upload failed:", error);
-    toast.error("Upload failed. Check console for details.");
-  } finally {
-    setUploading(false);
-  }
-};
+      const res = await candidateResume(resumeFile);
+      setResult(res);
+      toast.success("Resume processed successfully!");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Upload failed. Check console for details.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <Box className="candidates-root">
-      {/* Header */}
       <Box className="candidates-header">
         <Box>
           <Typography variant="h5" className="candidates-title">
@@ -106,7 +81,6 @@ const handleSubmit = async () => {
       </Box>
       <Divider className="sidebar-divider" />
 
-      {/* Controls */}
       <Box className="candidates-controls">
         <Button
           variant="outlined"
@@ -134,7 +108,6 @@ const handleSubmit = async () => {
       </Box>
       <Divider className="sidebar-divider" />
 
-      {/* Result */}
       {result && (
         <Box
           mt={2}
@@ -148,7 +121,6 @@ const handleSubmit = async () => {
         </Box>
       )}
 
-      {/* Candidates Count and View Toggle */}
       <Box className="candidates-count-row">
         <Typography variant="body2" className="candidates-count">
           Showing <b>{candidates.length}</b> of <b>{candidates.length}</b>{" "}
@@ -164,12 +136,16 @@ const handleSubmit = async () => {
         </Box>
       </Box>
 
-      {/* Candidate Cards */}
       <Box className="candidates-list">
         {candidates.map((c) => (
           <Card key={c.name} className="candidate-card" elevation={0}>
             <CardContent className="candidate-card-content">
-              <Avatar className="candidate-avatar">{c.initials}</Avatar>
+              <Avatar className="candidate-avatar">
+                {c.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </Avatar>
               <Box className="candidate-info">
                 <Box className="candidate-header">
                   <Typography variant="subtitle1" className="candidate-name">
@@ -181,32 +157,30 @@ const handleSubmit = async () => {
                   className="candidate-role"
                   sx={{ fontWeight: 600, color: "#2563eb" }}
                 >
-                  {c.role}
+                  {c.designation}
                 </Typography>
                 <Typography variant="body2" className="candidate-desc">
-                  {c.description}
+                  {c.professional_summary}
                 </Typography>
                 <Box className="candidate-meta">
                   <Typography variant="body2" className="candidate-meta-item">
                     {c.email}
                   </Typography>
                   <Typography variant="body2" className="candidate-meta-item">
-                    {c.phone}
+                    {c.contact_number}
                   </Typography>
                   <Typography variant="body2" className="candidate-meta-item">
-                    {c.location}
-                  </Typography>
-                  <Typography variant="body2" className="candidate-meta-item">
-                    Applied {c.applied}
+                    {c.Location}
                   </Typography>
                 </Box>
                 <Box className="candidate-tags">
-                  {c.tags.map((tag) => (
+                  {c.technical_skills.map((tag) => (
                     <Chip key={tag} label={tag} className="candidate-tag" />
                   ))}
                 </Box>
                 <Typography variant="body2" className="candidate-education">
-                  <b>Education:</b> {c.education}
+                  <b>Education:</b> {c.education?.[0]?.degree} –{" "}
+                  {c.education?.[0]?.institution}
                 </Typography>
               </Box>
               <Box className="candidate-score-col">
