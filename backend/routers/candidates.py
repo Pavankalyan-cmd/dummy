@@ -176,3 +176,29 @@ async def get_candidate_resumes(request: Request):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching resumes: {str(e)}")
+
+
+
+
+@router.delete("/candidate-resume/{candidate_id}")
+async def delete_candidate_resume(request: Request, candidate_id: str):
+    try:
+        uid = verify_firebase_token(request)
+
+        # Reference to the candidate document
+        candidate_doc_ref = db.collection("users").document(uid).collection("candidates").document(candidate_id)
+
+        # Check if document exists
+        if not candidate_doc_ref.get().exists:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+
+        # Delete the document
+        candidate_doc_ref.delete()
+
+        return {
+            "status": "success",
+            "message": f"Candidate {candidate_id} deleted successfully"
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting candidate: {str(e)}")

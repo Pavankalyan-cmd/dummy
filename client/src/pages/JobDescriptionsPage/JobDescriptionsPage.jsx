@@ -18,6 +18,7 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import {
   getJobDescriptions,
   uploadJobDescriptions,
+  deleteJobDescription
 } from "../services/services";
 
 import { ToastContainer, toast } from "react-toastify";
@@ -67,6 +68,19 @@ export default function JobDescriptionsPage() {
       setLoading(false);
     }
   };
+  const handleDeleteJD = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this JD?")) return;
+
+    try {
+      await deleteJobDescription(id);
+      toast.success("Job description deleted successfully!");
+      setJobs((prev) => prev.filter((j) => j.jd_id !== id));
+    } catch (err) {
+      console.error("Delete failed", err);
+      toast.error("Failed to delete job description.");
+    }
+  };
+
 
   return (
     <Box className="jd-root">
@@ -208,7 +222,7 @@ export default function JobDescriptionsPage() {
                 <IconButton>
                   <VisibilityOutlinedIcon />
                 </IconButton>
-                <IconButton>
+                <IconButton onClick={() => handleDeleteJD(job.jd_id)}>
                   <DeleteOutlineOutlinedIcon />
                 </IconButton>
                 <IconButton>

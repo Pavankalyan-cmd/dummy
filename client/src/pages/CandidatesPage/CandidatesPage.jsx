@@ -16,7 +16,7 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import { toast } from "react-toastify";
 
-import { candidateResume, getCandidateResumes } from "../services/services";
+import { candidateResume, getCandidateResumes,deleteCandidate } from "../services/services";
 
 import "./CandidatesPage.css";
 
@@ -41,6 +41,20 @@ export default function CandidatesPage() {
 
     fetchCandidates();
   }, []);
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this candidate?"))
+      return;
+
+    try {
+      await deleteCandidate(id);
+      toast.success("Candidate deleted successfully");
+      setCandidates((prev) => prev.filter((c) => c.candidate_id !== id));
+    } catch (err) {
+      toast.error("Failed to delete candidate.");
+      console.error(err);
+    }
+  };
+
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -207,7 +221,7 @@ export default function CandidatesPage() {
                   <IconButton>
                     <DownloadOutlinedIcon />
                   </IconButton>
-                  <IconButton>
+                  <IconButton onClick={() => handleDelete(c.candidate_id)}>
                     <DeleteOutlineOutlinedIcon />
                   </IconButton>
                 </Box>

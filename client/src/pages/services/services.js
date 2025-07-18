@@ -118,3 +118,43 @@ export const uploadJobDescriptions = async (files) => {
 
   return response.data;
 };
+
+
+export const deleteCandidate = async (candidate_id) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) throw new Error("User not authenticated");
+
+  const idToken = await user.getIdToken();
+
+  const response = await axios.delete(
+    `${API_BASE}/api/candidate-resume/${candidate_id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+export const deleteJobDescription = async (jd_id) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) throw new Error("User not authenticated");
+
+  const idToken = await user.getIdToken();
+
+  const response = await axios.delete(
+    `${API_BASE}/api/job-description/${jd_id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    }
+  );
+
+  return response.data;
+};

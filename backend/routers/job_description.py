@@ -150,3 +150,24 @@ async def get_job_descriptions(request: Request):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching JDs: {str(e)}")
+
+
+@router.delete("/job-description/{jd_id}")
+async def delete_job_description(request: Request, jd_id: str):
+    try:
+        uid = verify_firebase_token(request)
+
+        jd_doc_ref = db.collection("users").document(uid).collection("job_descriptions").document(jd_id)
+
+        if not jd_doc_ref.get().exists:
+            raise HTTPException(status_code=404, detail="Job Description not found")
+
+        jd_doc_ref.delete()
+
+        return {
+            "status": "success",
+            "message": f"Job Description {jd_id} deleted successfully"
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting JD: {str(e)}")
