@@ -8,9 +8,11 @@ import os
 import json
 from dotenv import load_dotenv
 import re
-import uuid
+from urllib.parse import urlparse
 
-# Load environment variables
+import uuid
+from storage.azure import upload_resume_to_azure ,delete_resume_from_azure
+
 load_dotenv()
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -99,11 +101,22 @@ async def upload_multiple_jds(
             jd_data = JobDescription.parse_obj(cleaned_data)
 
             jd_id = str(uuid.uuid4())
+            jd_url = upload_resume_to_azure(
+                uid=uid,
+                candidate_id=jd_id,  # reuse same param
+                filename=jd_file.filename,
+                content=jd_content,
+                content_type=jd_file.content_type or "application/pdf"
+            )   
+          
             jd_dict = jd_data.dict()
             jd_dict.update({
                 "uid": uid,
-                "jd_id": jd_id
+                "jd_id": jd_id,
+                "jd_url": jd_url 
             })
+     
+
 
             db.collection("users").document(uid).collection("job_descriptions").document(jd_id).set(jd_dict)
 
@@ -111,6 +124,7 @@ async def upload_multiple_jds(
                 "filename": jd_file.filename,
                 "jd_id": jd_id,
                 "parsed_data": jd_dict
+
             })
 
         except Exception as e:
@@ -157,16 +171,27 @@ async def delete_job_description(request: Request, jd_id: str):
     try:
         uid = verify_firebase_token(request)
 
+        # Reference to the JD document
         jd_doc_ref = db.collection("users").document(uid).collection("job_descriptions").document(jd_id)
+        doc_snapshot = jd_doc_ref.get()
 
-        if not jd_doc_ref.get().exists:
+        if not doc_snapshot.exists:
             raise HTTPException(status_code=404, detail="Job Description not found")
 
+        jd_data = doc_snapshot.to_dict()
+
+        # Delete JD file from Azure Blob Storage (if present)
+        jd_url = jd_data.get("jd_url")
+        if jd_url:
+            parsed_url = urlparse(jd_url)
+            blob_path = parsed_url.path.lstrip(f"/{os.getenv('AZURE_CONTAINER_NAME')}/")
+            delete_resume_from_azure(blob_path)
+        # Delete JD document from Firestore
         jd_doc_ref.delete()
 
         return {
             "status": "success",
-            "message": f"Job Description {jd_id} deleted successfully"
+            "message": f"Job Description {jd_id} and associated file deleted successfully"
         }
 
     except Exception as e:

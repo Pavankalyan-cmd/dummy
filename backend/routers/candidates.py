@@ -8,12 +8,14 @@ import os
 import json
 from dotenv import load_dotenv
 import re
-import uuid
+from urllib.parse import urlparse
 
-# Load environment variables
+import uuid
+from storage.azure import upload_resume_to_azure,delete_resume_from_azure
+
 load_dotenv()
 
-# Configure Gemini
+
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-2.0-flash")
 
@@ -56,6 +58,7 @@ async def candidate_resumes(
     request: Request,
     resumes: List[UploadFile] = File(...)
 ):
+    
     uid = verify_firebase_token(request)
     results = []
 
@@ -108,7 +111,6 @@ async def candidate_resumes(
 
             response = model.generate_content(prompt, generation_config=generation_config)
             raw_output = getattr(response, "text", None)
-            print(f"Gemini Raw Output for {resume.filename}:", repr(raw_output))
 
             cleaned_json_str = extract_json_from_response(raw_output)
             parsed_json = json.loads(cleaned_json_str)
@@ -116,19 +118,20 @@ async def candidate_resumes(
 
             candidate_data = Candidate.parse_obj(cleaned_data)
             candidate_id = str(uuid.uuid4())
+            resume_url = upload_resume_to_azure(
+            uid=uid,
+            candidate_id=candidate_id,
+            filename=resume.filename,
+            content=resume_content,
+            content_type=resume.content_type or "application/pdf"
+             )
 
-            # Optional Firebase Storage logic (preserved from your original code)
-            # file_extension = resume.filename.split(".")[-1]
-            # blob = bucket.blob(f"resumes/{candidate_id}.{file_extension}")
-            # blob.upload_from_string(resume_content, content_type=resume.content_type)
-            # blob.make_public()  # Optional: If you want public access
-            # resume_url = blob.public_url
 
             candidate_dict = candidate_data.dict()
             candidate_dict.update({
                 "uid": uid,
                 "candidate_id": candidate_id,
-                # "resume_url": resume_url,
+                "resume_url": resume_url,
             })
 
             db.collection("users").document(uid).collection("candidates").document(candidate_id).set(candidate_dict)
@@ -155,7 +158,6 @@ async def candidate_resumes(
 async def get_candidate_resumes(request: Request):
     try:
         uid = verify_firebase_token(request)
-        print(uid)
 
         candidates_ref = db.collection("users").document(uid).collection("candidates")
         docs = candidates_ref.stream()
@@ -163,10 +165,8 @@ async def get_candidate_resumes(request: Request):
         candidate_list = []
         for doc in docs:
             candidate = doc.to_dict()
-            print("candidate", candidate)
-            candidate["id"] = doc.id  # Include doc ID for frontend usage
+            candidate["id"] = doc.id  
             candidate_list.append(candidate)
-            print("list", candidate_list)
 
         return {
             "status": "success",
@@ -185,19 +185,28 @@ async def delete_candidate_resume(request: Request, candidate_id: str):
     try:
         uid = verify_firebase_token(request)
 
-        # Reference to the candidate document
+   
         candidate_doc_ref = db.collection("users").document(uid).collection("candidates").document(candidate_id)
+        doc_snapshot = candidate_doc_ref.get()
 
-        # Check if document exists
-        if not candidate_doc_ref.get().exists:
+        if not doc_snapshot.exists:
             raise HTTPException(status_code=404, detail="Candidate not found")
 
-        # Delete the document
+        candidate_data = doc_snapshot.to_dict()
+
+
+        resume_url = candidate_data.get("resume_url")
+        if resume_url:
+            parsed_url = urlparse(resume_url)
+            blob_path = parsed_url.path.lstrip(f"/{os.getenv('AZURE_CONTAINER_NAME')}/")
+            delete_resume_from_azure(blob_path)
+
+        print(f"Candidate {candidate_id} and resume deleted successfully")
         candidate_doc_ref.delete()
 
         return {
             "status": "success",
-            "message": f"Candidate {candidate_id} deleted successfully"
+            "message": f"Candidate {candidate_id} and resume deleted successfully"
         }
 
     except Exception as e:
