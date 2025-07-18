@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState ,useRef} from "react";
 import {
   Box,
   Button,
@@ -25,8 +25,12 @@ export default function CandidatesPage() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState(null);
   const [candidates, setCandidates] = useState([]);
+  const hasFetched = useRef(false);
+  
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     const fetchCandidates = async () => {
       try {
         const data = await getCandidateResumes();
@@ -56,8 +60,8 @@ export default function CandidatesPage() {
       setUploading(true);
       toast.info("Uploading and analyzing resume...");
 
-      const res = await candidateResume(resumeFile);
-      setResult(res);
+      await candidateResume(resumeFile);
+
       toast.success("Resume processed successfully!");
     } catch (error) {
       console.error("Upload failed:", error);

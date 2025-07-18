@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState ,useRef} from "react";
 import {
   Box,
   Button,
@@ -17,15 +17,22 @@ import { getJobDescriptions, uploadJobDescription } from "../services/services";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./JobDescriptionsPage.css";
+import { Tooltip } from "@mui/material";
+
 
 export default function JobDescriptionsPage() {
   const [jobs, setJobs] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const hasFetched = useRef(false);
+
 
   const fetchJDs = async () => {
+
     try {
       setLoading(true);
+      toast.info("Uploading and analyzing resume...");
+      
       const data = await getJobDescriptions();
       setJobs(data);
     } catch (err) {
@@ -36,15 +43,20 @@ export default function JobDescriptionsPage() {
   };
 
   useEffect(() => {
-    fetchJDs();
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
+    // Your API call
+    fetchJDs()
   }, []);
+
 
   const handleUpload = async () => {
     if (!selectedFile) return toast.warn("Please select a file first.");
     try {
       setLoading(true);
-      const jdData = await uploadJobDescription(selectedFile);
-      setJobs((prev) => [...prev, jdData]);
+      await uploadJobDescription(selectedFile);
+
       toast.success("Job description uploaded successfully!");
       setSelectedFile(null);
     } catch (err) {
@@ -93,7 +105,7 @@ export default function JobDescriptionsPage() {
           disabled={!selectedFile || loading}
           onClick={handleUpload}
         >
-          {loading ? <CircularProgress size={20} /> : "Submit"}
+          {loading ? "loading" : "Submit"}
         </Button>
       </Box>
 
@@ -133,9 +145,23 @@ export default function JobDescriptionsPage() {
                   </Typography>
                 </Box>
 
-                <Typography variant="body2" className="jd-desc">
-                  {job.description}
-                </Typography>
+                <Tooltip
+                  title={job.description || ""}
+                  placement="bottom"
+                  omponentsProps={{
+                    tooltip: {
+                      sx: {
+                        Width: 700, // or any px value you want
+                        whiteSpace: "pre-wrap",
+                      },
+                    },
+                  }}
+                  arrow
+                >
+                  <Typography variant="body2" className="jd-desc">
+                    {job.description}
+                  </Typography>
+                </Tooltip>
 
                 <Box className="jd-req-row">
                   <Typography variant="body2" className="jd-req-label">

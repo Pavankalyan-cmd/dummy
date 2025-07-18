@@ -139,7 +139,6 @@ async def candidate_resumes(
             # "resume_url": resume_url,
             "candidate_id": candidate_id
         })
-        print(candidate_dict)
 
         db.collection("users").document(uid).collection("candidates").document(candidate_id).set(candidate_dict)
 

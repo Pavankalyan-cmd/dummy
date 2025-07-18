@@ -137,9 +137,15 @@
 }
 
 .jd-desc {
-  color: #7a7a7a;
-  text-align: left;
-  font-size: 1.1rem !important; 
+  display: -webkit-box;
+  -webkit-line-clamp: 2;        /* Limit to 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;          /* Ensure wrapping */
+  max-height: 3em;              /* Adjust if needed */
+  line-height: 1.5em;
+  cursor: pointer;
 }
 
 .jd-req-row {

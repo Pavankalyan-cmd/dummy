@@ -1,8 +1,11 @@
 import React from "react";
-import { Button, Typography,  Box } from "@mui/material";
+import { Button, Typography, Box } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import "./LandingPage.css";
 import { useNavigate } from "react-router-dom";
+// make sure this path is correcth
+import { getIdToken } from "firebase/auth";
+import { auth, provider, signInWithPopup } from "../../firebase";
 
 const features = [
   "Reduce screening time by 80%",
@@ -12,27 +15,49 @@ const features = [
 ];
 
 export default function LandingPage() {
-    const navigate = useNavigate();
-      const handleSignIn = () => {
-        navigate("/signin");
-      };
+  const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const token = await getIdToken(user);
+
+      // OPTIONAL: Store token in localStorage or Redux
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Redirect to dashboard
+      navigate("/dashboard/candidates");
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+      alert("Google Sign-In failed. Check your Firebase config.");
+    }
+  };
 
   return (
     <Box className="landing-root">
       <header className="landing-header">
         <Box className="logo-box">
           <img src="/logo.svg" alt="RecruitPro Logo" className="logo-img" />
-          <Typography variant="h6" className="logo-text" sx={{fontWeight:"bold"}}>
+          <Typography
+            variant="h6"
+            className="logo-text"
+            sx={{ fontWeight: "bold" }}
+          >
             RecruitPro
           </Typography>
         </Box>
-
       </header>
       <main className="landing-main">
         <Typography className="platform-badge" variant="caption">
           ✨ AI-Powered Recruitment Platform
         </Typography>
-        <Typography className="main-title" variant="h2" sx={{fontWeight:"bold"}}>
+        <Typography
+          className="main-title"
+          variant="h2"
+          sx={{ fontWeight: "bold" }}
+        >
           Smart Resume Screening
           <br />& Candidate Matching
         </Typography>
@@ -41,10 +66,13 @@ export default function LandingPage() {
           intelligent candidate scoring, and seamless integrations.
         </Typography>
         <Box className="cta-buttons">
-          <Button variant="contained" className="start-trial-btn" onClick={handleSignIn}>
-            Sign In
+          <Button
+            variant="contained"
+            className="start-trial-btn"
+            onClick={handleGoogleSignIn}
+          >
+            Sign In with Google
           </Button>
-  
         </Box>
         <Box className="features-row">
           {features.map((feature, idx) => (

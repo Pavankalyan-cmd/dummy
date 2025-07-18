@@ -7,7 +7,6 @@ import CandidatesPage from "../CandidatesPage/CandidatesPage";
 import JobDescriptionsPage from "../JobDescriptionsPage/JobDescriptionsPage";
 import TopMatchesPage from "../TopMatchesPage/TopMatchesPage";
 import Layout from "../Layout/Layout";
-import SignInPage from "../SignInPage/SignInPage";
 import LandingPage from "../LandingPage/LandingPage";
 import ProtectedRoute from "../../component/Sidebar/ProtectedRoute";
 
@@ -19,7 +18,6 @@ export default function Routespage() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/signin" element={<SignInPage />} />
 
         {/* Protected Routes under Layout */}
         <Route element={<ProtectedRoute />}>
