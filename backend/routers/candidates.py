@@ -1,16 +1,14 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
-from services.parser import extract_text_from_pdf, extract_text_from_docx,clean_spacing,clean_candidate_data
-from firebase_config import verify_firebase_token
-from pydantic import BaseModel,Field
+from services.parser import extract_text_from_pdf, extract_text_from_docx, clean_spacing, clean_candidate_data
+from firebase_config import verify_firebase_token, db
+from pydantic import BaseModel, Field
 from typing import List, Optional
 import google.generativeai as genai
 import os
 import json
 from dotenv import load_dotenv
 import re
-from firebase_config import db
 import uuid
-import re
 
 # Load environment variables
 load_dotenv()
@@ -44,7 +42,6 @@ class Candidate(BaseModel):
     projects: List[Project]
     professional_summary: str
 
-
 def extract_json_from_response(text: str) -> str:
     try:
         json_match = re.search(r"\{.*\}", text, re.DOTALL)
@@ -54,131 +51,122 @@ def extract_json_from_response(text: str) -> str:
     except Exception as e:
         raise ValueError(f"Failed to extract JSON: {str(e)}")
 
-
 @router.post("/candidate-resume")
 async def candidate_resumes(
     request: Request,
-    resume: UploadFile = File(...)
+    resumes: List[UploadFile] = File(...)
 ):
-
     uid = verify_firebase_token(request)
+    results = []
 
-    try:
+    for resume in resumes:
+        try:
+            resume_content = await resume.read()
 
-        resume_content = await resume.read()
+            if resume.filename.endswith(".pdf"):
+                resume_text = extract_text_from_pdf(resume_content)
+            elif resume.filename.endswith(".docx"):
+                resume_text = extract_text_from_docx(resume_content)
+            else:
+                raise HTTPException(status_code=400, detail=f"Unsupported resume format: {resume.filename}")
 
-    
-        if resume.filename.endswith(".pdf"):
-            resume_text = extract_text_from_pdf(resume_content)
-        elif resume.filename.endswith(".docx"):
-            resume_text = extract_text_from_docx(resume_content)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported resume format")
+            candidate_schema_json = Candidate.schema_json(indent=2)
+            prompt = f"""
+            You are an information extraction engine.
 
+            Task: Read the resume text below and extract ONLY the information that is explicitly supported by the text. Do NOT guess or invent anything.
 
-        candidate_schema_json = Candidate.schema_json(indent=2)
-        prompt = f"""
-        You are an information extraction engine.
+            Output: return ONLY valid JSON. Do not include comments, markdown, or extra text.
+            Extract the following candidate fields:
+            - name
+            - designation
+            - experience
+            - Location
+            - contact number
+            - email
+            - education (list of degree, institution, year)
+            - technical skills (list of technologies or tools)
+            - key achievements
+            - certifications
+            - projects (list of title and description)
+            - professional summary
 
-        Task: Read the resume text below and extract ONLY the information that is explicitly supported by the text. Do NOT guess or invent anything.
+            Return the result as valid JSON that matches this schema exactly:
+            {candidate_schema_json}
 
-        Output: return ONLY valid JSON. Do not include comments, markdown, or extra text.
-        Extract the following candidate fields:
-        - name
-        - designation
-        - experience
-        - Location
-        - contact number
-        - email
-        - education (list of degree, institution, year)
-        - technical skills (list of technologies or tools)
-        - key achievements
-        - certifications
-        - projects (list of title and description)
-        - professional summary
+            Resume Text:
+            \"\"\"
+            {resume_text}
+            \"\"\"
+            """
 
-        Return the result as valid JSON that matches this schema exactly:
-        {candidate_schema_json}
+            generation_config = genai.types.GenerationConfig(
+                response_mime_type="application/json",
+                temperature=0.0,
+                max_output_tokens=2048,
+            )
 
-        Resume Text:
-        \"\"\"
-        {resume_text}
-        \"\"\"
-        """
+            response = model.generate_content(prompt, generation_config=generation_config)
+            raw_output = getattr(response, "text", None)
+            print(f"Gemini Raw Output for {resume.filename}:", repr(raw_output))
 
-        generation_config = genai.types.GenerationConfig(
-        response_mime_type="application/json",
-        temperature=0.0,
-        max_output_tokens=2048,
-    )
-        response = model.generate_content(prompt,generation_config=generation_config)
-        raw_output = getattr(response, "text", None)
+            cleaned_json_str = extract_json_from_response(raw_output)
+            parsed_json = json.loads(cleaned_json_str)
+            cleaned_data = clean_candidate_data(parsed_json)
 
+            candidate_data = Candidate.parse_obj(cleaned_data)
+            candidate_id = str(uuid.uuid4())
 
-        print("Gemini Raw Output:", repr(raw_output))
-        cleaned_json_str = extract_json_from_response(raw_output)
-        parsed_json = json.loads(cleaned_json_str)
-        cleaned_data = clean_candidate_data(parsed_json)
+            # Optional Firebase Storage logic (preserved from your original code)
+            # file_extension = resume.filename.split(".")[-1]
+            # blob = bucket.blob(f"resumes/{candidate_id}.{file_extension}")
+            # blob.upload_from_string(resume_content, content_type=resume.content_type)
+            # blob.make_public()  # Optional: If you want public access
+            # resume_url = blob.public_url
 
-        candidate_data = Candidate.parse_obj(cleaned_data)
-     
-        candidate_id = str(uuid.uuid4())
+            candidate_dict = candidate_data.dict()
+            candidate_dict.update({
+                "uid": uid,
+                "candidate_id": candidate_id,
+                # "resume_url": resume_url,
+            })
 
-      
-        # file_extension = resume.filename.split(".")[-1]
-        # blob = bucket.blob(f"resumes/{candidate_id}.{file_extension}")
-        # blob.upload_from_string(resume_content, content_type=resume.content_type)
-        # blob.make_public()  # Optional: If you want public access
+            db.collection("users").document(uid).collection("candidates").document(candidate_id).set(candidate_dict)
 
-        # resume_url = blob.public_url
+            results.append({
+                "filename": resume.filename,
+                "candidate_id": candidate_id,
+                "parsed_data": candidate_dict
+            })
 
+        except Exception as e:
+            results.append({
+                "filename": resume.filename,
+                "error": str(e)
+            })
 
-        candidate_dict = candidate_data.dict()
-        candidate_dict.update({
-            "uid": uid,
-            # "resume_url": resume_url,
-            "candidate_id": candidate_id
-        })
-
-        db.collection("users").document(uid).collection("candidates").document(candidate_id).set(candidate_dict)
-
-
-        
-
-     
-
-        return {
-            "status": "success",
-            "uid": uid,
-            "parsed_data": candidate_dict
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Extraction or parsing failed: {str(e)}")
-
-
-
+    return {
+        "status": "completed",
+        "uid": uid,
+        "results": results
+    }
 
 @router.get("/candidate-resumes")
 async def get_candidate_resumes(request: Request):
     try:
-
         uid = verify_firebase_token(request)
         print(uid)
 
         candidates_ref = db.collection("users").document(uid).collection("candidates")
         docs = candidates_ref.stream()
 
-        # Build response list
-        print("docs",docs)
         candidate_list = []
         for doc in docs:
-
             candidate = doc.to_dict()
-            print("candidate",candidate)
+            print("candidate", candidate)
             candidate["id"] = doc.id  # Include doc ID for frontend usage
             candidate_list.append(candidate)
-            print("list",candidate_list)
+            print("list", candidate_list)
 
         return {
             "status": "success",

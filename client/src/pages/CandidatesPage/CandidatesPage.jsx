@@ -1,4 +1,4 @@
-import React, { useEffect, useState ,useRef} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Button,
@@ -21,12 +21,10 @@ import { candidateResume, getCandidateResumes } from "../services/services";
 import "./CandidatesPage.css";
 
 export default function CandidatesPage() {
-  const [resumeFile, setResumeFile] = useState(null);
+  const [resumeFiles, setResumeFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const hasFetched = useRef(false);
-  
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -45,24 +43,26 @@ export default function CandidatesPage() {
   }, []);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setResumeFile(file);
-    setResult(null);
+    const files = Array.from(e.target.files);
+    setResumeFiles(files);
   };
 
   const handleSubmit = async () => {
-    if (!resumeFile) {
-      toast.warning("Please select a resume to upload.");
+    if (resumeFiles.length === 0) {
+      toast.warning("Please select one or more resumes to upload.");
       return;
     }
 
     try {
       setUploading(true);
-      toast.info("Uploading and analyzing resume...");
+      toast.info("Uploading and analyzing resumes...");
 
-      await candidateResume(resumeFile);
+      await candidateResume(resumeFiles);
+      toast.success("Resumes processed successfully!");
 
-      toast.success("Resume processed successfully!");
+      // Refresh candidates list
+      const updated = await getCandidateResumes();
+      setCandidates(updated);
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Upload failed. Check console for details.");
@@ -92,10 +92,11 @@ export default function CandidatesPage() {
           startIcon={<CloudUploadIcon />}
           className="upload-btn"
         >
-          Upload File
+          Upload File(s)
           <input
             type="file"
             hidden
+            multiple
             accept=".pdf,.doc,.docx"
             onChange={handleFileChange}
           />
@@ -109,21 +110,28 @@ export default function CandidatesPage() {
         >
           {uploading ? "Uploading..." : "Submit"}
         </Button>
+        {resumeFiles.length > 0 && (
+          <Box mt={1} sx={{ maxHeight: 100, overflowY: "auto" }}>
+            {resumeFiles.map((file, idx) => (
+              <Typography
+                key={idx}
+                variant="body2"
+                sx={{
+                  fontSize: "0.85rem",
+                  color: "#555",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: 300,
+                }}
+              >
+                📄 {file.name}
+              </Typography>
+            ))}
+          </Box>
+        )}
       </Box>
       <Divider className="sidebar-divider" />
-
-      {result && (
-        <Box
-          mt={2}
-          p={2}
-          sx={{ backgroundColor: "#f9f9f9", borderRadius: "8px" }}
-        >
-          <Typography variant="h6">Upload Result</Typography>
-          <pre style={{ whiteSpace: "pre-wrap" }}>
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        </Box>
-      )}
 
       <Box className="candidates-count-row">
         <Typography variant="body2" className="candidates-count">
@@ -142,11 +150,15 @@ export default function CandidatesPage() {
 
       <Box className="candidates-list">
         {candidates.map((c) => (
-          <Card key={c.name} className="candidate-card" elevation={0}>
+          <Card
+            key={c.candidate_id || c.id || c.name}
+            className="candidate-card"
+            elevation={0}
+          >
             <CardContent className="candidate-card-content">
               <Avatar className="candidate-avatar">
                 {c.name
-                  .split(" ")
+                  ?.split(" ")
                   .map((n) => n[0])
                   .join("")}
               </Avatar>
@@ -174,11 +186,11 @@ export default function CandidatesPage() {
                     {c.contact_number}
                   </Typography>
                   <Typography variant="body2" className="candidate-meta-item">
-                    {c.Location}
+                    {c.location || c.Location}
                   </Typography>
                 </Box>
                 <Box className="candidate-tags">
-                  {c.technical_skills.map((tag) => (
+                  {c.technical_skills?.map((tag) => (
                     <Chip key={tag} label={tag} className="candidate-tag" />
                   ))}
                 </Box>

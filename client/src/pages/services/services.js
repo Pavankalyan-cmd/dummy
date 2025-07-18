@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_BASE_URL;
 
-export const candidateResume = async (resumeFile) => {
+export const candidateResume = async (resumeFiles) => {
   const auth = getAuth();
   const user = auth.currentUser;
 
@@ -12,7 +12,10 @@ export const candidateResume = async (resumeFile) => {
   const idToken = await user.getIdToken();
 
   const formData = new FormData();
-  formData.append("resume", resumeFile);
+  resumeFiles.forEach((file) => {
+    formData.append("resumes", file); // ⬅️ 'resumes' matches the FastAPI parameter
+  });
+
   try {
     const response = await axios.post(
       `${API_BASE}/api/candidate-resume`,
@@ -20,6 +23,7 @@ export const candidateResume = async (resumeFile) => {
       {
         headers: {
           Authorization: `Bearer ${idToken}`,
+          "Content-Type": "multipart/form-data",
         },
       }
     );
@@ -27,7 +31,7 @@ export const candidateResume = async (resumeFile) => {
     return response.data;
   } catch (error) {
     console.error(
-      "Error analyzing resume and JD:",
+      "Error analyzing resume(s):",
       error.response?.data || error.message
     );
     throw error;
@@ -92,7 +96,7 @@ export const getJobDescriptions = async () => {
 
 
 
-export const uploadJobDescription = async (file) => {
+export const uploadJobDescriptions = async (files) => {
   const auth = getAuth();
   const user = auth.currentUser;
 
@@ -101,24 +105,16 @@ export const uploadJobDescription = async (file) => {
   const idToken = await user.getIdToken();
 
   const formData = new FormData();
-  formData.append("jd_file", file); // key name must match FastAPI param
+  files.forEach((file) => {
+    formData.append("jd_files", file); // plural field to match FastAPI param
+  });
 
-  try {
-    const response = await axios.post(`${API_BASE}/api/upload-jd`, formData, {
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+  const response = await axios.post(`${API_BASE}/api/upload-jd`, formData, {
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
-    console.log("Uploaded JD:", response.data.jd_data);
-    return response.data.jd_data;
-  } catch (error) {
-    console.error(
-      "Error uploading JD file:",
-      error.response?.data || error.message
-    );
-    throw error;
-  }
+  return response.data;
 };
-
