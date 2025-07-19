@@ -1,23 +1,23 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
-from services.parser import extract_text_from_pdf, extract_text_from_docx, clean_spacing, clean_candidate_data
 from firebase_config import verify_firebase_token, db
 from pydantic import BaseModel, Field
 from typing import List, Optional
-import google.generativeai as genai
+from google import genai
 import os
+from services.parser import extract_text_from_docx
 import json
 from dotenv import load_dotenv
 import re
 from urllib.parse import urlparse
-
+from google.genai.types import GenerateContentConfig,Part
 import uuid
 from storage.azure import upload_resume_to_azure,delete_resume_from_azure
-
+from llmservices.topscore_gemini import analyze_multiple_resumes_structured
+from services.scoring import calculate_total_score
+from storage.firestore import save_candidate_topscore_to_firestore
 load_dotenv()
 
-
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("gemini-2.0-flash")
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 router = APIRouter()
 
@@ -44,97 +44,97 @@ class Candidate(BaseModel):
     projects: List[Project]
     professional_summary: str
 
-def extract_json_from_response(text: str) -> str:
-    try:
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if not json_match:
-            raise ValueError("No valid JSON object found in response.")
-        return json_match.group(0)
-    except Exception as e:
-        raise ValueError(f"Failed to extract JSON: {str(e)}")
 
 @router.post("/candidate-resume")
 async def candidate_resumes(
     request: Request,
     resumes: List[UploadFile] = File(...)
 ):
-    
     uid = verify_firebase_token(request)
     results = []
 
     for resume in resumes:
         try:
-            resume_content = await resume.read()
-
-            if resume.filename.endswith(".pdf"):
-                resume_text = extract_text_from_pdf(resume_content)
-            elif resume.filename.endswith(".docx"):
-                resume_text = extract_text_from_docx(resume_content)
-            else:
-                raise HTTPException(status_code=400, detail=f"Unsupported resume format: {resume.filename}")
-
-            candidate_schema_json = Candidate.schema_json(indent=2)
-            prompt = f"""
-            You are an information extraction engine.
-
-            Task: Read the resume text below and extract ONLY the information that is explicitly supported by the text. Do NOT guess or invent anything.
-
-            Output: return ONLY valid JSON. Do not include comments, markdown, or extra text.
-            Extract the following candidate fields:
-            - name
-            - designation
-            - experience
-            - Location
-            - contact number
-            - email
-            - education (list of degree, institution, year)
-            - technical skills (list of technologies or tools)
-            - key achievements
-            - certifications
-            - projects (list of title and description)
-            - professional summary
-
-            Return the result as valid JSON that matches this schema exactly:
-            {candidate_schema_json}
-
-            Resume Text:
-            \"\"\"
-            {resume_text}
-            \"\"\"
-            """
-
-            generation_config = genai.types.GenerationConfig(
-                response_mime_type="application/json",
-                temperature=0.0,
-                max_output_tokens=2048,
-            )
-
-            response = model.generate_content(prompt, generation_config=generation_config)
-            raw_output = getattr(response, "text", None)
-
-            cleaned_json_str = extract_json_from_response(raw_output)
-            parsed_json = json.loads(cleaned_json_str)
-            cleaned_data = clean_candidate_data(parsed_json)
-
-            candidate_data = Candidate.parse_obj(cleaned_data)
+            resume_bytes = await resume.read()
             candidate_id = str(uuid.uuid4())
             resume_url = upload_resume_to_azure(
-            uid=uid,
-            candidate_id=candidate_id,
-            filename=resume.filename,
-            content=resume_content,
-            content_type=resume.content_type or "application/pdf"
-             )
+                uid=uid, candidate_id=candidate_id,
+                filename=resume.filename,
+                content=resume_bytes,
+                content_type=resume.content_type or "application/pdf"
+            )
+            if resume.filename.lower().endswith(".docx") or resume.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                extracted_text = extract_text_from_docx(resume_bytes)
+                print("EXTRACTED TEXT:\n", extracted_text[:1000])
+
+                file_part = Part.from_text(extracted_text)
+                print("file_part mime_type:", file_part.mime_type)
+                if hasattr(file_part, "text"):
+                    print("file_part.text snippet:", file_part.text[:500])
+                else:
+                    print("No .text attribute available on file_part")
+            else:  
+                file_part = Part.from_bytes(
+                    data=resume_bytes,
+                    mime_type=resume.content_type or "application/pdf"
+                )
 
 
-            candidate_dict = candidate_data.dict()
+            candidate_schema_json = Candidate.schema_json(indent=2)
+            prompt = f"""You are an information extraction engine...
+            Return only valid JSON matching this schema:
+            {candidate_schema_json}
+            """
+
+            response = await client.aio.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=[file_part, prompt],
+                config=GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=Candidate,
+                    temperature=0.2
+                )
+            )
+            
+            candidate_model = response.parsed
+            if isinstance(candidate_model, Candidate):
+                candidate_dict = candidate_model.model_dump()
+            else:
+                candidate_dict = json.loads(response.text)
+
             candidate_dict.update({
                 "uid": uid,
                 "candidate_id": candidate_id,
-                "resume_url": resume_url,
+                "resume_url": resume_url
             })
 
-            db.collection("users").document(uid).collection("candidates").document(candidate_id).set(candidate_dict)
+            db.collection("users").document(uid) \
+              .collection("candidates").document(candidate_id) \
+              .set(candidate_dict)
+            def has_skill_overlap(jd_skills, candidate_skills, min_overlap=2):
+                return len(set(jd_skills).intersection(set(candidate_skills))) >= min_overlap
+            
+            jd_ref = db.collection("users").document(uid).collection("job_descriptions")
+            jd_docs = jd_ref.stream()
+            matching_jds = []
+
+
+            for jd_doc in jd_docs:
+                jd_dict = jd_doc.to_dict()
+                jd_skills = jd_dict.get("required_skills", [])
+                candidate_skills = candidate_dict.get("technical_skills", [])
+
+                if has_skill_overlap(jd_skills, candidate_skills, min_overlap=1):
+                    matching_jds.append((jd_doc.id, jd_dict))
+
+            # If matches found, score and store top match
+            for jd_id, jd_data in matching_jds:
+                scored = analyze_multiple_resumes_structured(jd_data, [candidate_dict])
+                for s in scored:
+                    s["total_score"] = calculate_total_score(s)
+                for candidate in scored:
+                    save_candidate_topscore_to_firestore(uid=uid, jd_id=jd_id, candidate=candidate)
+
 
             results.append({
                 "filename": resume.filename,
@@ -145,14 +145,12 @@ async def candidate_resumes(
         except Exception as e:
             results.append({
                 "filename": resume.filename,
-                "error": str(e)
+                "error": str(e),
+                "raw_output": locals().get("response", {}).text if 'response' in locals() else None
             })
 
-    return {
-        "status": "completed",
-        "uid": uid,
-        "results": results
-    }
+    return {"status": "completed", "uid": uid, "results": results}
+
 
 @router.get("/candidate-resumes")
 async def get_candidate_resumes(request: Request):
@@ -180,12 +178,13 @@ async def get_candidate_resumes(request: Request):
 
 
 
+
+
 @router.delete("/candidate-resume/{candidate_id}")
 async def delete_candidate_resume(request: Request, candidate_id: str):
     try:
         uid = verify_firebase_token(request)
 
-   
         candidate_doc_ref = db.collection("users").document(uid).collection("candidates").document(candidate_id)
         doc_snapshot = candidate_doc_ref.get()
 

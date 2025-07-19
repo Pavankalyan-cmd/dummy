@@ -7,19 +7,22 @@ import {
   CardContent,
   Chip,
   IconButton,
-  CircularProgress,
   Tooltip,
+  Modal,
+  Backdrop,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 
 import {
   getJobDescriptions,
   uploadJobDescriptions,
-  deleteJobDescription
+  deleteJobDescription,
 } from "../services/services";
+
+import TopMatchesPage from "../TopMatchesPage/TopMatchesPage";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -29,6 +32,10 @@ export default function JobDescriptionsPage() {
   const [jobs, setJobs] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedJD, setSelectedJD] = useState(null); // ⬅️ NEW: which JD to show matches for
+  const [jdViewUrl, setJdViewUrl] = useState(null);
+  const [jdModalOpen, setJdModalOpen] = useState(false);
+
   const hasFetched = useRef(false);
 
   const fetchJDs = async () => {
@@ -57,7 +64,7 @@ export default function JobDescriptionsPage() {
       setLoading(true);
       toast.info("Uploading and analyzing job descriptions...");
 
-      await uploadJobDescriptions(selectedFiles); // must be implemented in services.js
+      await uploadJobDescriptions(selectedFiles);
       toast.success("Job descriptions uploaded successfully!");
 
       setSelectedFiles([]);
@@ -68,6 +75,7 @@ export default function JobDescriptionsPage() {
       setLoading(false);
     }
   };
+
   const handleDeleteJD = async (id) => {
     if (!window.confirm("Are you sure you want to delete this JD?")) return;
 
@@ -81,158 +89,214 @@ export default function JobDescriptionsPage() {
     }
   };
 
+  const handleViewMatches = (jd_id) => {
+    setSelectedJD(jd_id); // ⬅️ Set selected JD to show top matches
+  };
+
+  const handleBackFromMatches = () => {
+    setSelectedJD(null); // ⬅️ Go back to JD list
+  };
 
   return (
     <Box className="jd-root">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* Header */}
-      <Box className="jd-header">
-        <Box>
-          <Typography variant="h5" className="jd-title">
-            <b>Job Descriptions</b>
-          </Typography>
-          <Typography variant="body2" className="jd-subtitle">
-            Create and manage job postings
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Controls Row */}
-      <Box className="jd-controls">
-        <Button
-          variant="outlined"
-          component="label"
-          startIcon={<CloudUploadIcon />}
-          className="upload-jd-btn"
-        >
-          Upload JD
-          <input
-            type="file"
-            hidden
-            multiple
-            accept=".pdf,.doc,.docx"
-            onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
-          />
-        </Button>
-
-        <Button
-          variant="contained"
-          className="submit-jd-btn"
-          disabled={!selectedFiles.length || loading}
-          onClick={handleUpload}
-        >
-          {loading ? "Uploading..." : "Submit"}
-        </Button>
-        {selectedFiles.length > 0 && (
-          <Box mt={1} sx={{ maxHeight: 100, overflowY: "auto" }}>
-            {selectedFiles.map((file, idx) => (
-              <Typography
-                key={idx}
-                variant="body2"
-                sx={{
-                  fontSize: "0.85rem",
-                  color: "#555",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: 300,
-                }}
-              >
-                📄 {file.name}
+      {/* If a JD is selected, show TopMatchesPage instead of JD List */}
+      {selectedJD ? (
+        <TopMatchesPage jd_id={selectedJD} onBack={handleBackFromMatches} />
+      ) : (
+        <>
+          {/* Header */}
+          <Box className="jd-header">
+            <Box>
+              <Typography variant="h5" className="jd-title">
+                <b>Job Descriptions</b>
               </Typography>
+              <Typography variant="body2" className="jd-subtitle">
+                Create and manage job postings
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Controls Row */}
+          <Box className="jd-controls">
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<CloudUploadIcon />}
+              className="upload-jd-btn"
+            >
+              Upload JD
+              <input
+                type="file"
+                hidden
+                multiple
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
+              />
+            </Button>
+
+            <Button
+              variant="contained"
+              className="submit-jd-btn"
+              disabled={!selectedFiles.length || loading}
+              onClick={handleUpload}
+            >
+              {loading ? "Uploading..." : "Submit"}
+            </Button>
+            {selectedFiles.length > 0 && (
+              <Box mt={1} sx={{ maxHeight: 100, overflowY: "auto" }}>
+                {selectedFiles.map((file, idx) => (
+                  <Typography
+                    key={idx}
+                    variant="body2"
+                    sx={{
+                      fontSize: "0.85rem",
+                      color: "#555",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: 300,
+                    }}
+                  >
+                    📄 {file.name}
+                  </Typography>
+                ))}
+              </Box>
+            )}
+          </Box>
+
+          {/* Job Cards */}
+          <Box className="jd-list">
+            {jobs.length === 0 && !loading && (
+              <Typography variant="body2" sx={{ mt: 2 }}>
+                No job descriptions found.
+              </Typography>
+            )}
+
+            {jobs.map((job, idx) => (
+              <Card key={job.jd_id || idx} className="jd-card" elevation={0}>
+                <CardContent className="jd-card-content">
+                  <Box className="jd-card-main">
+                    <Box className="jd-card-header">
+                      <Typography variant="subtitle1" className="jd-job-title">
+                        <b>{job.jobtitle}</b>
+                      </Typography>
+                      {job.company && (
+                        <Typography
+                          variant="body2"
+                          className="jd-meta-item"
+                          sx={{ color: "#888" }}
+                        >
+                          {job.company}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    <Box className="jd-card-meta">
+                      <Typography variant="body2" className="jd-meta-item">
+                        {job.location || "Location not specified"}
+                      </Typography>
+                      <Typography variant="body2" className="jd-meta-item">
+                        {job.salary_range || "Salary not specified"}
+                      </Typography>
+                    </Box>
+
+                    <Tooltip
+                      title={job.description || ""}
+                      placement="bottom"
+                      componentsProps={{
+                        tooltip: {
+                          sx: {
+                            maxWidth: 700,
+                            whiteSpace: "pre-wrap",
+                          },
+                        },
+                      }}
+                      arrow
+                    >
+                      <Typography variant="body2" className="jd-desc">
+                        {job.description}
+                      </Typography>
+                    </Tooltip>
+
+                    <Box className="jd-req-row">
+                      <Typography variant="body2" className="jd-req-label">
+                        <p>Key Requirements:</p>
+                      </Typography>
+                      <Box className="jd-req-tags">
+                        {job.required_experience && (
+                          <Chip
+                            label={job.required_experience}
+                            className="jd-req-tag"
+                          />
+                        )}
+                        {job.required_skills?.map((skill, i) => (
+                          <Chip key={i} label={skill} className="jd-req-tag" />
+                        ))}
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  <Box className="jd-card-actions">
+                    <IconButton onClick={() => handleViewMatches(job.jd_id)}>
+                      <VisibilityOutlinedIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDeleteJD(job.jd_id)}>
+                      <DeleteOutlineOutlinedIcon />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => {
+                        if (job.jd_url) {
+                          setJdViewUrl(job.jd_url);
+                          setJdModalOpen(true);
+                        } else {
+                          toast.warn("No JD file available.");
+                        }
+                      }}
+                    >
+                      <DescriptionOutlinedIcon />
+                    </IconButton>
+                  </Box>
+                </CardContent>
+              </Card>
             ))}
           </Box>
-        )}
-      </Box>
-
-      {/* Job Cards */}
-      <Box className="jd-list">
-        {jobs.length === 0 && !loading && (
-          <Typography variant="body2" sx={{ mt: 2 }}>
-            No job descriptions found.
-          </Typography>
-        )}
-
-        {jobs.map((job, idx) => (
-          <Card key={job.jd_id || idx} className="jd-card" elevation={0}>
-            <CardContent className="jd-card-content">
-              <Box className="jd-card-main">
-                <Box className="jd-card-header">
-                  <Typography variant="subtitle1" className="jd-job-title">
-                    <b>{job.jobtitle}</b>
-                  </Typography>
-                  {job.company && (
-                    <Typography
-                      variant="body2"
-                      className="jd-meta-item"
-                      sx={{ color: "#888" }}
-                    >
-                      {job.company}
-                    </Typography>
-                  )}
-                </Box>
-
-                <Box className="jd-card-meta">
-                  <Typography variant="body2" className="jd-meta-item">
-                    {job.location || "Location not specified"}
-                  </Typography>
-                  <Typography variant="body2" className="jd-meta-item">
-                    {job.salary_range || "Salary not specified"}
-                  </Typography>
-                </Box>
-
-                <Tooltip
-                  title={job.description || ""}
-                  placement="bottom"
-                  componentsProps={{
-                    tooltip: {
-                      sx: {
-                        maxWidth: 700,
-                        whiteSpace: "pre-wrap",
-                      },
-                    },
-                  }}
-                  arrow
-                >
-                  <Typography variant="body2" className="jd-desc">
-                    {job.description}
-                  </Typography>
-                </Tooltip>
-
-                <Box className="jd-req-row">
-                  <Typography variant="body2" className="jd-req-label">
-                    <p>Key Requirements:</p>
-                  </Typography>
-                  <Box className="jd-req-tags">
-                    {job.required_experience && (
-                      <Chip
-                        label={job.required_experience}
-                        className="jd-req-tag"
-                      />
-                    )}
-                    {job.required_skills?.map((skill, i) => (
-                      <Chip key={i} label={skill} className="jd-req-tag" />
-                    ))}
-                  </Box>
-                </Box>
-              </Box>
-
-              <Box className="jd-card-actions">
-                <IconButton>
-                  <VisibilityOutlinedIcon />
-                </IconButton>
-                <IconButton onClick={() => handleDeleteJD(job.jd_id)}>
-                  <DeleteOutlineOutlinedIcon />
-                </IconButton>
-                <IconButton>
-                  <DownloadOutlinedIcon />
-                </IconButton>
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
+        </>
+      )}
+      <Modal
+        open={jdModalOpen}
+        onClose={() => setJdModalOpen(false)}
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{ timeout: 500 }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "80%",
+            height: "80%",
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 2,
+          }}
+        >
+          {jdViewUrl ? (
+            <iframe
+              src={jdViewUrl}
+              title="JD Preview"
+              width="100%"
+              height="100%"
+              style={{ border: "none" }}
+            />
+          ) : (
+            <Typography>Loading job description...</Typography>
+          )}
+        </Box>
+      </Modal>
     </Box>
   );
 }

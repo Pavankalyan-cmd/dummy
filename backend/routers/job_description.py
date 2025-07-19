@@ -1,22 +1,24 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
-from services.parser import extract_text_from_pdf, extract_text_from_docx, clean_spacing, clean_jd_data
+from services.parser import extract_text_from_docx
 from firebase_config import verify_firebase_token, db
 from pydantic import BaseModel
 from typing import List, Optional
-import google.generativeai as genai
+from google import genai
 import os
 import json
 from dotenv import load_dotenv
 import re
 from urllib.parse import urlparse
-
 import uuid
 from storage.azure import upload_resume_to_azure ,delete_resume_from_azure
-
+from google.genai.types import GenerateContentConfig,Part 
+from  services.scoring import calculate_total_score
+from storage.firestore import save_topscore_results_to_firestore
+from llmservices.topscore_gemini import analyze_multiple_resumes_structured
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("gemini-2.0-flash")
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+
 
 router = APIRouter()
 
@@ -34,14 +36,10 @@ class JobDescription(BaseModel):
     contact_email: Optional[str]
     description: str
 
-def extract_json_from_response(text: str) -> str:
-    try:
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if not json_match:
-            raise ValueError("No valid JSON object found in response.")
-        return json_match.group(0)
-    except Exception as e:
-        raise ValueError(f"Failed to extract JSON: {str(e)}")
+
+
+
+
 
 @router.post("/upload-jd")
 async def upload_multiple_jds(
@@ -50,18 +48,33 @@ async def upload_multiple_jds(
 ):
     uid = verify_firebase_token(request)
     results = []
+    print(jd_files)
 
     for jd_file in jd_files:
         try:
-            jd_content = await jd_file.read()
+            jd_bytes = await jd_file.read()
+            jd_filename = jd_file.filename.lower()
+            jd_content_type = jd_file.content_type or "application/pdf"
+            jd_id = str(uuid.uuid4())
 
-            if jd_file.filename.endswith(".pdf"):
-                jd_text = extract_text_from_pdf(jd_content)
-            elif jd_file.filename.endswith(".docx"):
-                jd_text = extract_text_from_docx(jd_content)
+            jd_url = upload_resume_to_azure(
+                uid=uid,
+                candidate_id=jd_id,
+                filename=jd_file.filename,
+                content=jd_bytes,
+                content_type=jd_file.content_type or "application/pdf"
+            )
+
+            if jd_filename.endswith(".docx") or jd_content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                # Extract text for docx (fallback if Part fails)
+                extracted_text = extract_text_from_docx(jd_bytes)
+                file_part = Part.from_text(extracted_text)
             else:
-                raise HTTPException(status_code=400, detail=f"Unsupported JD format: {jd_file.filename}")
-
+                # Default to binary Part for PDFs
+                file_part = Part.from_bytes(
+                    data=jd_bytes,
+                    mime_type=jd_content_type
+                )
             jd_schema = JobDescription.schema_json(indent=2)
             prompt = f"""
             You are an information extraction engine.
@@ -87,36 +100,39 @@ async def upload_multiple_jds(
             Match this schema:
             {jd_schema}
 
-            JD Text:
-            \"\"\"{jd_text}\"\"\"
             """
+            try:
+                print("before invoking")
+                response = await client.aio.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=[file_part, prompt],
+                    config=GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=JobDescription,
+                        temperature=0.2
+                    )
+                )
+                print("after invoking")
+                jd_model = response.text  
+            except Exception as e:
+                print("Gemini API Error:", e)
+                raise HTTPException(status_code=500, detail=str(e))
 
-            response = model.generate_content(prompt)
-            raw_output = getattr(response, "text", None)
-            print(f"Raw output for {jd_file.filename}:", raw_output)
+            try:
+                jd_model = response.text  
+                jd_dict = jd_model.dict()
+            except Exception as parse_err:
+                print("Failed to parse as JobDescription:", parse_err)
+                print("Falling back to raw JSON text parsing...")
+                jd_dict = json.loads(response.text)
 
-            cleaned_json_str = extract_json_from_response(raw_output)
-            parsed_json = json.loads(cleaned_json_str)
-            cleaned_data = clean_jd_data(parsed_json)
-            jd_data = JobDescription.parse_obj(cleaned_data)
 
-            jd_id = str(uuid.uuid4())
-            jd_url = upload_resume_to_azure(
-                uid=uid,
-                candidate_id=jd_id,  # reuse same param
-                filename=jd_file.filename,
-                content=jd_content,
-                content_type=jd_file.content_type or "application/pdf"
-            )   
-          
-            jd_dict = jd_data.dict()
+
             jd_dict.update({
                 "uid": uid,
                 "jd_id": jd_id,
-                "jd_url": jd_url 
+                "jd_url": jd_url
             })
-     
-
 
             db.collection("users").document(uid).collection("job_descriptions").document(jd_id).set(jd_dict)
 
@@ -124,9 +140,45 @@ async def upload_multiple_jds(
                 "filename": jd_file.filename,
                 "jd_id": jd_id,
                 "parsed_data": jd_dict
-
             })
 
+            candidates_ref = db.collection("users").document(uid).collection("candidates")
+            candidates = candidates_ref.stream()
+            candidate_list = []
+            for doc in candidates:
+                data = doc.to_dict()
+                candidate_list.append(data)
+                  
+
+            def has_skill_overlap(jd_skills, candidate_skills, min_overlap=2):
+                return len(set(jd_skills).intersection(set(candidate_skills))) >= min_overlap
+
+
+            jd_skills = jd_dict.get("required_skills", [])    
+
+
+
+            filtered_candidates = []
+            for c in candidate_list:
+                candidate_skills = c.get("technical_skills", [])
+                if has_skill_overlap(jd_skills, candidate_skills, min_overlap=1):
+                    filtered_candidates.append(c)
+
+
+            if filtered_candidates:
+                topscore_results = analyze_multiple_resumes_structured(jd_dict, filtered_candidates)
+
+                for candidate in topscore_results:
+                    candidate["total_score"] = calculate_total_score(candidate)
+
+                print(topscore_results, "filtered and scored results")
+                save_topscore_results_to_firestore(uid=uid, jd_id=jd_id, topscore_results=topscore_results)
+            else:
+                print("⚠️ No matching candidates found for the given JD.")
+
+
+            
+            
         except Exception as e:
             results.append({
                 "filename": jd_file.filename,
@@ -164,6 +216,8 @@ async def get_job_descriptions(request: Request):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching JDs: {str(e)}")
+    
+
 
 
 @router.delete("/job-description/{jd_id}")
@@ -171,7 +225,7 @@ async def delete_job_description(request: Request, jd_id: str):
     try:
         uid = verify_firebase_token(request)
 
-        # Reference to the JD document
+
         jd_doc_ref = db.collection("users").document(uid).collection("job_descriptions").document(jd_id)
         doc_snapshot = jd_doc_ref.get()
 
@@ -180,13 +234,13 @@ async def delete_job_description(request: Request, jd_id: str):
 
         jd_data = doc_snapshot.to_dict()
 
-        # Delete JD file from Azure Blob Storage (if present)
+       
         jd_url = jd_data.get("jd_url")
         if jd_url:
             parsed_url = urlparse(jd_url)
             blob_path = parsed_url.path.lstrip(f"/{os.getenv('AZURE_CONTAINER_NAME')}/")
             delete_resume_from_azure(blob_path)
-        # Delete JD document from Firestore
+        
         jd_doc_ref.delete()
 
         return {

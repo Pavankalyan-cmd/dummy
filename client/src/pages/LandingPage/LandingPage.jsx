@@ -23,11 +23,9 @@ export default function LandingPage() {
       const user = result.user;
       const token = await getIdToken(user);
 
-      // OPTIONAL: Store token in localStorage or Redux
       localStorage.setItem("accessToken", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // Redirect to dashboard
       navigate("/dashboard/candidates");
     } catch (error) {
       console.error("Google Sign-In Error:", error);

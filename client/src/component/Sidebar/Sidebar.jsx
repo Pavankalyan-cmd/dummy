@@ -26,7 +26,6 @@ const navItems = [
     icon: <DescriptionIcon />,
     path: "job-descriptions",
   },
-  { label: "Top Matches", icon: <StarBorderIcon />, path: "top-matches" },
 ];
 
 const settingsItems = [

@@ -9,11 +9,13 @@ import {
   Chip,
   IconButton,
   Divider,
+  Modal,
+  Backdrop,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+
 import { toast } from "react-toastify";
 
 import { candidateResume, getCandidateResumes,deleteCandidate } from "../services/services";
@@ -25,6 +27,8 @@ export default function CandidatesPage() {
   const [uploading, setUploading] = useState(false);
   const [candidates, setCandidates] = useState([]);
   const hasFetched = useRef(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedResumeUrl, setSelectedResumeUrl] = useState(null);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -152,14 +156,6 @@ export default function CandidatesPage() {
           Showing <b>{candidates.length}</b> of <b>{candidates.length}</b>{" "}
           candidates
         </Typography>
-        <Box>
-          <Button variant="outlined" className="view-toggle-btn">
-            Grid View
-          </Button>
-          <Button variant="outlined" className="view-toggle-btn">
-            List View
-          </Button>
-        </Box>
       </Box>
 
       <Box className="candidates-list">
@@ -215,12 +211,15 @@ export default function CandidatesPage() {
               </Box>
               <Box className="candidate-score-col">
                 <Box className="candidate-actions">
-                  <IconButton>
-                    <VisibilityOutlinedIcon />
+                  <IconButton
+                    onClick={() => {
+                      setSelectedResumeUrl(c.resume_url);
+                      setOpenModal(true);
+                    }}
+                  >
+                    <DescriptionOutlinedIcon />
                   </IconButton>
-                  <IconButton>
-                    <DownloadOutlinedIcon />
-                  </IconButton>
+
                   <IconButton onClick={() => handleDelete(c.candidate_id)}>
                     <DeleteOutlineOutlinedIcon />
                   </IconButton>
@@ -230,6 +229,39 @@ export default function CandidatesPage() {
           </Card>
         ))}
       </Box>
+      <Modal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{ timeout: 500 }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "80%",
+            height: "80%",
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 2,
+          }}
+        >
+          {selectedResumeUrl ? (
+            <iframe
+              src={selectedResumeUrl}
+              title="Resume Preview"
+              width="100%"
+              height="100%"
+              style={{ border: "none" }}
+            />
+          ) : (
+            <Typography>Loading resume...</Typography>
+          )}
+        </Box>
+      </Modal>
     </Box>
   );
 }

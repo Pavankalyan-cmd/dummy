@@ -158,3 +158,19 @@ export const deleteJobDescription = async (jd_id) => {
 
   return response.data;
 };
+export const getTopScoreCandidates = async (jd_id) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) throw new Error("User not authenticated");
+
+  const idToken = await user.getIdToken();
+
+  const response = await axios.get(`${API_BASE}/api/top-score/${jd_id}`, {
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+    },
+  });
+  console.log(response.data)
+  return response.data;
+};
