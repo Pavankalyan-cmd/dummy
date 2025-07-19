@@ -65,14 +65,8 @@ async def candidate_resumes(
             )
             if resume.filename.lower().endswith(".docx") or resume.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
                 extracted_text = extract_text_from_docx(resume_bytes)
-                print("EXTRACTED TEXT:\n", extracted_text[:1000])
 
                 file_part = Part.from_text(extracted_text)
-                print("file_part mime_type:", file_part.mime_type)
-                if hasattr(file_part, "text"):
-                    print("file_part.text snippet:", file_part.text[:500])
-                else:
-                    print("No .text attribute available on file_part")
             else:  
                 file_part = Part.from_bytes(
                     data=resume_bytes,
@@ -81,9 +75,40 @@ async def candidate_resumes(
 
 
             candidate_schema_json = Candidate.schema_json(indent=2)
-            prompt = f"""You are an information extraction engine...
+            prompt = f"""You are an intelligent information extraction engine. Your task is to extract structured candidate information from the uploaded resume document.
+
             Return only valid JSON matching this schema:
             {candidate_schema_json}
+            ### General Instructions:
+            - Read the resume carefully and extract accurate data for each field.
+            - Use only the information present in the resume. **Do not guess or hallucinate**.
+            - If a field is not found, set it to null or an empty list as appropriate.
+            - Ensure the final output is strictly valid JSON.
+
+            ### Field-Level Guidelines:
+            - **name**: Full name of the candidate. Usually found at the top or in the contact section.
+            - **designation**: Current or most recent job title (e.g., "Senior Software Engineer").
+            - **experience**: Total **professional experience in years**, as a float (e.g., 4.5).
+            - **contact_number**: Candidate’s phone number.
+            - **email**: Candidate’s email address.
+            - **location**: Candidate’s **current location or address**. Usually found in the header, contact section, or email signature.
+                - If the candidate's current city or address is explicitly mentioned, extract it.
+                - **Do not use** locations from past job roles or university locations unless clearly stated as the current location.
+            - **education**: Extract a list of degrees with:
+                - Degree title (e.g., B.Tech, M.Sc)
+                - Field of study (e.g., Computer Science)
+                - Institution name
+                - Graduation year if available
+            - **technical_skills**: List of technologies, programming languages, tools, or frameworks mentioned.
+            - **key_achievements**: Bullet points or sentences indicating major professional accomplishments or recognitions.
+            - **certifications**: Any relevant professional certifications or completed courses (e.g., AWS Certified Developer).
+            - **projects**: List of key projects with:
+                - Title
+                - Description (concise summary of what the project does) if not available not include DECLARATION
+                - Technologies used (if mentioned)
+            - **professional_summary**: The summary or objective section—usually at the top. Should be concise and written in first or third person.
+            Return only valid and well-formatted JSON that matches the schema above.
+
             """
 
             response = await client.aio.models.generate_content(
@@ -200,7 +225,6 @@ async def delete_candidate_resume(request: Request, candidate_id: str):
             blob_path = parsed_url.path.lstrip(f"/{os.getenv('AZURE_CONTAINER_NAME')}/")
             delete_resume_from_azure(blob_path)
 
-        print(f"Candidate {candidate_id} and resume deleted successfully")
         candidate_doc_ref.delete()
 
         return {

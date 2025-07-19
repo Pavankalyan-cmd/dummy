@@ -21,9 +21,7 @@ import {
   uploadJobDescriptions,
   deleteJobDescription,
 } from "../services/services";
-
 import TopMatchesPage from "../TopMatchesPage/TopMatchesPage";
-
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./JobDescriptionsPage.css";
@@ -35,6 +33,8 @@ export default function JobDescriptionsPage() {
   const [selectedJD, setSelectedJD] = useState(null); // ⬅️ NEW: which JD to show matches for
   const [jdViewUrl, setJdViewUrl] = useState(null);
   const [jdModalOpen, setJdModalOpen] = useState(false);
+  const [showFullJD, setShowFullJD] = useState(false);
+
 
   const hasFetched = useRef(false);
 
@@ -90,11 +90,11 @@ export default function JobDescriptionsPage() {
   };
 
   const handleViewMatches = (jd_id) => {
-    setSelectedJD(jd_id); // ⬅️ Set selected JD to show top matches
+    setSelectedJD(jd_id); 
   };
 
   const handleBackFromMatches = () => {
-    setSelectedJD(null); // ⬅️ Go back to JD list
+    setSelectedJD(null); 
   };
 
   return (
@@ -165,6 +165,12 @@ export default function JobDescriptionsPage() {
               </Box>
             )}
           </Box>
+          <Box className="candidates-count-row">
+            <Typography variant="body2" className="candidates-count">
+              Showing <b>{jobs.length}</b> of <b>{jobs.length}</b> Job
+              Descriptions
+            </Typography>
+          </Box>
 
           {/* Job Cards */}
           <Box className="jd-list">
@@ -202,23 +208,27 @@ export default function JobDescriptionsPage() {
                       </Typography>
                     </Box>
 
-                    <Tooltip
-                      title={job.description || ""}
-                      placement="bottom"
-                      componentsProps={{
-                        tooltip: {
-                          sx: {
-                            maxWidth: 700,
-                            whiteSpace: "pre-wrap",
-                          },
-                        },
-                      }}
-                      arrow
-                    >
-                      <Typography variant="body2" className="jd-desc">
-                        {job.description}
+                    <Typography variant="body2" className="jd-desc">
+                      {showFullJD
+                        ? job.description
+                        : `${job.description.slice(0, 200)}${
+                            job.description.length > 200 ? "..." : ""
+                          }`}
+                    </Typography>
+
+                    {job.description.length > 200 && (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "primary.main",
+                          cursor: "pointer",
+                          mt: 0.5,
+                        }}
+                        onClick={() => setShowFullJD(!showFullJD)}
+                      >
+                        {showFullJD ? "Show less" : "Show more"}
                       </Typography>
-                    </Tooltip>
+                    )}
 
                     <Box className="jd-req-row">
                       <Typography variant="body2" className="jd-req-label">
@@ -237,26 +247,33 @@ export default function JobDescriptionsPage() {
                       </Box>
                     </Box>
                   </Box>
-
                   <Box className="jd-card-actions">
-                    <IconButton onClick={() => handleViewMatches(job.jd_id)}>
-                      <VisibilityOutlinedIcon />
-                    </IconButton>
-                    <IconButton onClick={() => handleDeleteJD(job.jd_id)}>
-                      <DeleteOutlineOutlinedIcon />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => {
-                        if (job.jd_url) {
-                          setJdViewUrl(job.jd_url);
-                          setJdModalOpen(true);
-                        } else {
-                          toast.warn("No JD file available.");
-                        }
-                      }}
-                    >
-                      <DescriptionOutlinedIcon />
-                    </IconButton>
+                    <Tooltip title="View Matches">
+                      <IconButton onClick={() => handleViewMatches(job.jd_id)}>
+                        <VisibilityOutlinedIcon />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Delete Job Description">
+                      <IconButton onClick={() => handleDeleteJD(job.jd_id)}>
+                        <DeleteOutlineOutlinedIcon />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="View JD File">
+                      <IconButton
+                        onClick={() => {
+                          if (job.jd_url) {
+                            setJdViewUrl(job.jd_url);
+                            setJdModalOpen(true);
+                          } else {
+                            toast.warn("No JD file available.");
+                          }
+                        }}
+                      >
+                        <DescriptionOutlinedIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </CardContent>
               </Card>

@@ -3,7 +3,6 @@ import { Button, Typography, Box } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import "./LandingPage.css";
 import { useNavigate } from "react-router-dom";
-// make sure this path is correcth
 import { getIdToken } from "firebase/auth";
 import { auth, provider, signInWithPopup } from "../../firebase";
 
@@ -37,7 +36,11 @@ export default function LandingPage() {
     <Box className="landing-root">
       <header className="landing-header">
         <Box className="logo-box">
-          <img src="/logo.svg" alt="RecruitPro Logo" className="logo-img" />
+          <img
+            src="https://i.postimg.cc/XJG9rkr8/Adobe-Express-file.png"
+            alt="RecruitPro Logo"
+            className="logo-img"
+          />
           <Typography
             variant="h6"
             className="logo-text"

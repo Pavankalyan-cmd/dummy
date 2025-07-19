@@ -12,10 +12,8 @@ app.include_router(candidates.router,prefix="/api")
 app.include_router(job_description.router,prefix="/api")
 app.include_router(topscore.router,prefix="/api")
 
-# Clean and validate ALLOWED_ORIGINS
 origins_raw = os.getenv("ALLOWED_ORIGINS", "")
 origins = [o.strip() for o in origins_raw.split(",") if o.strip()]
-print("CORS Origins:", origins)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

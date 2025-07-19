@@ -11,17 +11,14 @@ import {
   Divider,
   Modal,
   Backdrop,
+  Tooltip
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-
 import { toast } from "react-toastify";
-
 import { candidateResume, getCandidateResumes,deleteCandidate } from "../services/services";
-
 import "./CandidatesPage.css";
-
 export default function CandidatesPage() {
   const [resumeFiles, setResumeFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -29,6 +26,12 @@ export default function CandidatesPage() {
   const hasFetched = useRef(false);
   const [openModal, setOpenModal] = useState(false);
   const [selectedResumeUrl, setSelectedResumeUrl] = useState(null);
+  const [showFull, setShowFull] = useState(false);
+  const fileInputRef = useRef(null);
+
+
+  const toggleShow = () => setShowFull((prev) => !prev);
+
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -78,9 +81,12 @@ export default function CandidatesPage() {
       await candidateResume(resumeFiles);
       toast.success("Resumes processed successfully!");
 
-      // Refresh candidates list
       const updated = await getCandidateResumes();
       setCandidates(updated);
+      setResumeFiles([]); 
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; 
+      }
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Upload failed. Check console for details.");
@@ -101,7 +107,6 @@ export default function CandidatesPage() {
           </Typography>
         </Box>
       </Box>
-      <Divider className="sidebar-divider" />
 
       <Box className="candidates-controls">
         <Button
@@ -117,6 +122,7 @@ export default function CandidatesPage() {
             multiple
             accept=".pdf,.doc,.docx"
             onChange={handleFileChange}
+            ref={fileInputRef}
           />
         </Button>
 
@@ -149,7 +155,6 @@ export default function CandidatesPage() {
           </Box>
         )}
       </Box>
-      <Divider className="sidebar-divider" />
 
       <Box className="candidates-count-row">
         <Typography variant="body2" className="candidates-count">
@@ -185,9 +190,30 @@ export default function CandidatesPage() {
                 >
                   {c.designation}
                 </Typography>
-                <Typography variant="body2" className="candidate-desc">
+                <Typography
+                  variant="body2"
+                  className="candidate-desc"
+                  sx={{
+                    overflow: "hidden",
+                    display: "-webkit-box",
+                    WebkitLineClamp: showFull ? "unset" : 2,
+                    WebkitBoxOrient: "vertical",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {c.professional_summary}
                 </Typography>
+
+                {c.professional_summary?.length > 150 && (
+                  <Typography
+                    variant="body2"
+                    color="primary"
+                    sx={{ cursor: "pointer", mt: 0.5 }}
+                    onClick={toggleShow}
+                  >
+                    {showFull ? "Show less" : "Show more"}
+                  </Typography>
+                )}
                 <Box className="candidate-meta">
                   <Typography variant="body2" className="candidate-meta-item">
                     {c.email}
@@ -211,18 +237,22 @@ export default function CandidatesPage() {
               </Box>
               <Box className="candidate-score-col">
                 <Box className="candidate-actions">
-                  <IconButton
-                    onClick={() => {
-                      setSelectedResumeUrl(c.resume_url);
-                      setOpenModal(true);
-                    }}
-                  >
-                    <DescriptionOutlinedIcon />
-                  </IconButton>
+                  <Tooltip title="View Resume" arrow>
+                    <IconButton
+                      onClick={() => {
+                        setSelectedResumeUrl(c.resume_url);
+                        setOpenModal(true);
+                      }}
+                    >
+                      <DescriptionOutlinedIcon />
+                    </IconButton>
+                  </Tooltip>
 
-                  <IconButton onClick={() => handleDelete(c.candidate_id)}>
-                    <DeleteOutlineOutlinedIcon />
-                  </IconButton>
+                  <Tooltip title="Delete Candidate" arrow>
+                    <IconButton onClick={() => handleDelete(c.candidate_id)}>
+                      <DeleteOutlineOutlinedIcon />
+                    </IconButton>
+                  </Tooltip>
                 </Box>
               </Box>
             </CardContent>

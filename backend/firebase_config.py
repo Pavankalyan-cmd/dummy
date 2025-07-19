@@ -1,50 +1,33 @@
-import os
-import firebase_admin
-from firebase_admin import credentials, auth, firestore
+
 from dotenv import load_dotenv
 from fastapi import  HTTPException, Request
-import json
-import tempfile
-from dotenv import load_dotenv
 
+
+import os, json, firebase_admin
+from firebase_admin import credentials, firestore,auth
 load_dotenv()
-
 def initialize_firebase():
-    if firebase_admin._apps:
+    # Skip if an app is already initialized
+    try:
+        firebase_admin.get_app()
         return
+    except ValueError:
+        pass
 
-    raw_json = os.getenv("FIREBASE_CREDENTIAL_JSON")  # Azure
-    file_path = os.getenv("FIREBASE_CREDENTIAL_PATH", "Backend/firebase-credentials.json")  # Local fallback
-    
+    raw_json   = os.getenv("FIREBASE_CREDENTIAL_JSON") #Azure
+    local_path = os.getenv("FIREBASE_CREDENTIAL_PATH")
 
     if raw_json:
-        try:
-            # Decode once
-            cred_dict = json.loads(raw_json)
-
-            # If still a string (i.e., double quotes were around whole JSON), decode again
-            if isinstance(cred_dict, str):
-                cred_dict = json.loads(cred_dict)
-
-            with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.json') as temp_cred_file:
-                json.dump(cred_dict, temp_cred_file)
-                temp_cred_file.flush()
-                cred = credentials.Certificate(temp_cred_file.name)
-        except Exception as e:
-            raise RuntimeError(f"Invalid FIREBASE_CREDENTIAL_JSON: {e}")
+        cred = credentials.Certificate(json.loads(raw_json))
     else:
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Firebase credential file not found at {file_path}")
-     
-        cred = credentials.Certificate(file_path)
-
-
+        if not os.path.exists(local_path):
+            raise FileNotFoundError(f"Firebase credential file not found at {local_path}")
+        cred = credentials.Certificate(local_path)
 
     firebase_admin.initialize_app(cred)
 
 initialize_firebase()
 db = firestore.client()
-
 
 
 

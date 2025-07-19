@@ -2,10 +2,8 @@ import os
 import json
 from dotenv import load_dotenv
 from typing import List, Dict
-from pydantic import BaseModel, Field
 from google import genai
 from google.genai.types import GenerateContentConfig
-# Load .env and configure Gemini
 load_dotenv()
 client = genai.Client(api_key="GEMINI_API_KEY")
 
@@ -119,6 +117,8 @@ If the candidate has less than 2 years of experience, classify profile_type as "
 If the candidate has 4 or more years of experience, classify profile_type as "senior_engineer".
 
 If experience is between 2 and 4 years,  classify profile_type as "mid-level professional"
+6. Return a field called "skills_matched" which lists all the technical skills that are present in both the job description and the candidate's resume. Only include exact or highly relevant matches (e.g.,
+ "Python" in both counts as a match; "Java" vs "JavaScript" does not). Do not infer skills not clearly mentioned in the resume.
 
 
 Output Format: Return a list of candidate evaluation objects matching the predefined JSON schema.
@@ -126,7 +126,6 @@ Output Format: Return a list of candidate evaluation objects matching the predef
     """
 
     try:
-        print("before invoking")
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt,
@@ -134,10 +133,7 @@ Output Format: Return a list of candidate evaluation objects matching the predef
                 response_mime_type="application/json",
                 response_schema=response_schema 
             ),
-          
-          
         )
-      
         parsed = response.parsed 
         return parsed
     except Exception as e:

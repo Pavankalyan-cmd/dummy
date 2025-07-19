@@ -14,9 +14,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tooltip
 
 } from "@mui/material";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import StarIcon from "@mui/icons-material/Star";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
@@ -24,6 +24,7 @@ import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import { getTopScoreCandidates } from "../services/services";
 import "./TopMatchesPage.css";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 
 
 
@@ -83,9 +84,7 @@ const handleCloseResumeDialog = () => {
             Highest scoring candidates for your open positions
           </Typography>
         </Box>
-        <Box className="topmatches-header-actions">
- 
-        </Box>
+        <Box className="topmatches-header-actions"></Box>
       </Box>
 
       {/* Candidate Cards */}
@@ -134,7 +133,7 @@ const handleCloseResumeDialog = () => {
                     <PhoneOutlinedIcon
                       sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.5 }}
                     />
-                    {c.contact_number}
+                    {c.contact}
                   </Typography>
                   <Typography variant="body2" className="topmatch-meta-item">
                     <LocationOnOutlinedIcon
@@ -143,10 +142,12 @@ const handleCloseResumeDialog = () => {
                     {c.location || "N/A"}
                   </Typography>
                   <Typography variant="body2" className="topmatch-meta-item">
-                    <CalendarMonthOutlinedIcon
-                      sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.5 }}
-                    />
-                    {c.experience}
+                    <Tooltip title="Experience">
+                      <CalendarMonthOutlinedIcon
+                        sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.5 }}
+                      />
+                    </Tooltip>
+                    {Math.round(c.experience)}
                   </Typography>
                 </Box>
 
@@ -229,7 +230,7 @@ const handleCloseResumeDialog = () => {
                     onClick={() => handleViewResume(c.resume_url)}
                     color="primary"
                   >
-                    <VisibilityOutlinedIcon />
+                    <DescriptionOutlinedIcon />
                   </IconButton>
                 </Box>
               </Box>
@@ -238,7 +239,11 @@ const handleCloseResumeDialog = () => {
         ))}
       </Box>
       <Box>
-        <Button variant="outlined" onClick={onBack} sx={{ mb: 2 }}>
+        <Button
+          variant="outlined"
+          onClick={onBack}
+          sx={{ mb: 2, marginTop: 10 }}
+        >
           ← Back to Job Descriptions
         </Button>
 

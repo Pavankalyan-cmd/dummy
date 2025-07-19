@@ -38,9 +38,6 @@ class JobDescription(BaseModel):
 
 
 
-
-
-
 @router.post("/upload-jd")
 async def upload_multiple_jds(
     request: Request,
@@ -48,7 +45,6 @@ async def upload_multiple_jds(
 ):
     uid = verify_firebase_token(request)
     results = []
-    print(jd_files)
 
     for jd_file in jd_files:
         try:
@@ -79,30 +75,29 @@ async def upload_multiple_jds(
             prompt = f"""
             You are an information extraction engine.
 
-            Task: Read the resume text below and extract ONLY the information that is explicitly supported by the text. Do NOT guess or invent anything.
+            Task: Read the job description   extract ONLY the information that is explicitly supported by the text. Do NOT guess or invent anything.
 
             Output: return ONLY valid JSON. Do not include comments, markdown, or extra text.
-            Extract the following job description fields:
+            Extract the following fields:
 
-            - jobtitle
-            - company
-            - location
-            - required_experience
-            - job_type
-            - required_skills
-            - responsibilities
-            - qualifications
-            - salary_range
-            - posted_date
-            - contact_email
-            - description
+            - **jobtitle**: The exact job title for the role.
+            - **company**: The company or organization offering the job.
+            - **location**: The primary job location or work location if mentioned. Use city and/or country. If the job is remote, include "Remote".
+            - **required_experience**: The total years or range of professional experience required for the role (e.g., "3+ years", "5–7 years").
+            - **job_type**: Full-time, part-time, contract, internship, etc.
+            - **required_skills**: A list of core technical or soft skills mentioned (e.g., Python, communication, SQL, etc.).
+            - **responsibilities**: Bullet points or a paragraph describing what the job role involves or expects the candidate to do.
+            - **qualifications**: Educational background or certifications required (e.g., "Bachelor's in Computer Science").
+            - **salary_range**: If a salary or compensation range is mentioned (e.g., "₹10–15 LPA", "$70,000–$90,000"), include it.
+            - **posted_date**: The date when the job was posted, if explicitly mentioned.
+            - **contact_email**: Any email provided for applications or inquiries.
+            - **description**: The full body text of the job description or its overview.
 
             Match this schema:
             {jd_schema}
 
             """
             try:
-                print("before invoking")
                 response = await client.aio.models.generate_content(
                     model="gemini-2.0-flash",
                     contents=[file_part, prompt],
@@ -112,18 +107,15 @@ async def upload_multiple_jds(
                         temperature=0.2
                     )
                 )
-                print("after invoking")
                 jd_model = response.text  
             except Exception as e:
-                print("Gemini API Error:", e)
                 raise HTTPException(status_code=500, detail=str(e))
 
             try:
                 jd_model = response.text  
                 jd_dict = jd_model.dict()
             except Exception as parse_err:
-                print("Failed to parse as JobDescription:", parse_err)
-                print("Falling back to raw JSON text parsing...")
+   
                 jd_dict = json.loads(response.text)
 
 
@@ -171,10 +163,10 @@ async def upload_multiple_jds(
                 for candidate in topscore_results:
                     candidate["total_score"] = calculate_total_score(candidate)
 
-                print(topscore_results, "filtered and scored results")
                 save_topscore_results_to_firestore(uid=uid, jd_id=jd_id, topscore_results=topscore_results)
             else:
-                print("⚠️ No matching candidates found for the given JD.")
+         
+                return "matching candidates found for the given JD."
 
 
             

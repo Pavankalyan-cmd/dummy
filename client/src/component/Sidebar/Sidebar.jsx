@@ -8,18 +8,17 @@ import {
   ListItemText,
   Divider,
   IconButton,
+  Tooltip,
 } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/PeopleAltOutlined";
-import UploadIcon from "@mui/icons-material/UploadOutlined";
 import DescriptionIcon from "@mui/icons-material/DescriptionOutlined";
-import StarBorderIcon from "@mui/icons-material/StarBorderOutlined";
 import SettingsIcon from "@mui/icons-material/SettingsOutlined";
 import MenuOpenIcon from "@mui/icons-material/ViewSidebarOutlined";
-import { NavLink } from "react-router-dom";
+import LogoutIcon from "@mui/icons-material/LogoutOutlined";
+import { NavLink, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 
 const navItems = [
-
   { label: "Candidates", icon: <PeopleIcon />, path: "candidates" },
   {
     label: "Job Descriptions",
@@ -32,24 +31,52 @@ const settingsItems = [
   { label: "Integrations", icon: <SettingsIcon />, path: "settings" },
 ];
 
-export default function Sidebar({ onToggle }) {
+export default function Sidebar({ onToggle, collapsed }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear session, tokens, etc. here
+    // localStorage.removeItem("token");
+    navigate("/landingpage");
+  };
+
   return (
-    <Box className="sidebar-root">
+    <Box
+      className={`sidebar-root ${collapsed ? "collapsed" : ""}`}
+      sx={{
+        width: collapsed ? "70px" : "240px",
+        transition: "width 0.3s ease",
+        overflowX: "hidden",
+      }}
+    >
       {/* Header */}
-      <Box className="sidebar-header">
-        <img src="/logo.svg" alt="RecruitPro Logo" className="sidebar-logo" />
-        <Typography className="sidebar-title" variant="h6">
-          RecruitPro
-        </Typography>
+      <Box
+        className="sidebar-header"
+        sx={{ justifyContent: collapsed ? "center" : "flex-start" }}
+      >
+        {!collapsed && (
+          <>
+            <img
+              src="https://i.postimg.cc/XJG9rkr8/Adobe-Express-file.png"
+              alt="RecruitPro Logo"
+              className="sidebar-logo"
+            />
+            <Typography className="sidebar-title" variant="h6">
+              RecruitPro
+            </Typography>
+          </>
+        )}
       </Box>
 
       <Divider className="sidebar-divider" />
 
-      {/* Navigation Section */}
+      {/* Navigation */}
       <Box className="sidebar-section">
-        <Typography className="sidebar-section-title" variant="subtitle2">
-          Navigation
-        </Typography>
+        {!collapsed && (
+          <Typography className="sidebar-section-title" variant="subtitle2">
+            Navigation
+          </Typography>
+        )}
         <List>
           {navItems.map((item) => (
             <NavLink
@@ -64,21 +91,25 @@ export default function Sidebar({ onToggle }) {
                 <ListItemIcon className="sidebar-list-icon">
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{ className: "sidebar-list-text" }}
-                />
+                {!collapsed && (
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{ className: "sidebar-list-text" }}
+                  />
+                )}
               </ListItemButton>
             </NavLink>
           ))}
         </List>
       </Box>
 
-      {/* Settings Section */}
+      {/* Settings */}
       <Box className="sidebar-section">
-        <Typography className="sidebar-section-title" variant="subtitle2">
-          Settings
-        </Typography>
+        {!collapsed && (
+          <Typography className="sidebar-section-title" variant="subtitle2">
+            Settings
+          </Typography>
+        )}
         <List>
           {settingsItems.map((item) => (
             <NavLink
@@ -93,13 +124,28 @@ export default function Sidebar({ onToggle }) {
                 <ListItemIcon className="sidebar-list-icon">
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{ className: "sidebar-list-text" }}
-                />
+                {!collapsed && (
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{ className: "sidebar-list-text" }}
+                  />
+                )}
               </ListItemButton>
             </NavLink>
           ))}
+
+          {/* Logout Button */}
+          <ListItemButton className="sidebar-list-item" onClick={handleLogout}>
+            <ListItemIcon className="sidebar-list-icon">
+              <LogoutIcon />
+            </ListItemIcon>
+            {!collapsed && (
+              <ListItemText
+                primary="Logout"
+                primaryTypographyProps={{ className: "sidebar-list-text" }}
+              />
+            )}
+          </ListItemButton>
         </List>
       </Box>
 
@@ -107,9 +153,17 @@ export default function Sidebar({ onToggle }) {
 
       {/* Bottom Toggle */}
       <Box className="sidebar-bottom">
-        <IconButton onClick={onToggle} className="sidebar-toggle-btn">
-          <MenuOpenIcon fontSize="medium" />
-        </IconButton>
+        <Tooltip title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+          <IconButton onClick={onToggle} className="sidebar-toggle-btn">
+            <MenuOpenIcon
+              fontSize="medium"
+              style={{
+                transform: collapsed ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.3s ease",
+              }}
+            />
+          </IconButton>
+        </Tooltip>
       </Box>
     </Box>
   );

@@ -1,7 +1,6 @@
 from firebase_config import db
 
 def save_topscore_results_to_firestore(uid: str, jd_id: str, topscore_results: list):
-    print(uid,"uid in save_topscore_results_to_firestore")
     for candidate in topscore_results:
         candidate_id = candidate.get("candidate_id")
         if not candidate_id:
@@ -19,14 +18,11 @@ def save_topscore_results_to_firestore(uid: str, jd_id: str, topscore_results: l
 
 
         candidate_doc_ref.set(candidate)
-        print("sucessfully added")
 from firebase_admin import firestore
 
 def save_candidate_topscore_to_firestore(uid: str, jd_id: str, candidate: dict):
-    print(uid,jd_id,candidate)
     candidate_id = candidate.get("candidate_id")
     if not candidate_id:
-        print("Missing candidate_id.")
         return
 
     top_score_jd_ref = (
@@ -45,7 +41,6 @@ def save_candidate_topscore_to_firestore(uid: str, jd_id: str, candidate: dict):
             "jd_id": jd_id,
             "created_at": firestore.SERVER_TIMESTAMP
         })
-        print(f" Created JD record under top_score for jd_id: {jd_id}")
 
 
     candidate_doc_ref = top_score_jd_ref.collection("candidates").document(candidate_id)
@@ -63,11 +58,9 @@ def save_candidate_topscore_to_firestore(uid: str, jd_id: str, candidate: dict):
             "email": candidate.get("email"),
             "updated_at": firestore.SERVER_TIMESTAMP
         })
-        print(f"✅ Updated candidate {candidate_id} in JD {jd_id}")
     else:
     
         candidate_doc_ref.set({
             **candidate,
             "created_at": firestore.SERVER_TIMESTAMP
         })
-        print(f"Added new candidate {candidate_id} to JD {jd_id}")
