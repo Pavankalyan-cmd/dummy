@@ -9,6 +9,7 @@ import TopMatchesPage from "../TopMatchesPage/TopMatchesPage";
 import Layout from "../Layout/Layout";
 import LandingPage from "../LandingPage/LandingPage";
 import ProtectedRoute from "../../component/Sidebar/ProtectedRoute";
+import Integrations from "../IntegrationsPage/Integrations";
 
 export default function Routespage() {
   return (
@@ -27,6 +28,7 @@ export default function Routespage() {
             <Route path="candidates" element={<CandidatesPage />} />
             <Route path="job-descriptions" element={<JobDescriptionsPage />} />
             <Route path="top-matches" element={<TopMatchesPage />} />
+            <Route path="integrations" element={<Integrations/>}/>
             {/* You can add settings route here if needed */}
             {/* <Route path="settings" element={<SettingsPage />} /> */}
           </Route>

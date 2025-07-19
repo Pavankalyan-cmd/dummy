@@ -23,7 +23,6 @@ import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import { getTopScoreCandidates } from "../services/services";
 import "./TopMatchesPage.css";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 
 

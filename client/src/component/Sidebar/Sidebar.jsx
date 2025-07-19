@@ -28,7 +28,7 @@ const navItems = [
 ];
 
 const settingsItems = [
-  { label: "Integrations", icon: <SettingsIcon />, path: "settings" },
+  { label: "Integrations", icon: <SettingsIcon />, path: "integrations" },
 ];
 
 export default function Sidebar({ onToggle, collapsed }) {
@@ -37,7 +37,7 @@ export default function Sidebar({ onToggle, collapsed }) {
   const handleLogout = () => {
     // Clear session, tokens, etc. here
     // localStorage.removeItem("token");
-    navigate("/landingpage");
+    navigate("/");
   };
 
   return (

@@ -8,7 +8,7 @@ import {
   Avatar,
   Chip,
   IconButton,
-  Divider,
+
   Modal,
   Backdrop,
   Tooltip
