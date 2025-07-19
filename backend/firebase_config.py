@@ -15,7 +15,7 @@ def initialize_firebase():
         pass
 
     raw_json   = os.getenv("FIREBASE_CREDENTIAL_JSON") #Azure
-    local_path = os.getenv("FIREBASE_CREDENTIAL_PATH")
+    local_path = os.getenv("FIREBASE_CREDENTIAL_PATH", "/app/firebase-credentials.json")
 
     if raw_json:
         cred = credentials.Certificate(json.loads(raw_json))

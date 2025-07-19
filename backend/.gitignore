@@ -19,7 +19,7 @@ db.sqlite3
 
 # Firebase credentials
 firebase-credentials.json
-
+serviceAccountKey.json
 # IDE specific files
 .vscode/
 .idea/
@@ -27,3 +27,5 @@ firebase-credentials.json
 # OS generated files
 .DS_Store
 Thumbs.db
+
+Dockerfile

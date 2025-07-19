@@ -1,1 +1,0 @@
-pip install fastapi python-multipart aiofiles PyMuPDF python-docx google-generativeai  PyPDF2 python-dotenv 
