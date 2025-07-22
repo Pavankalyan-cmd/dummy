@@ -12,7 +12,6 @@ import {
   Backdrop,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 
@@ -30,7 +29,7 @@ export default function JobDescriptionsPage() {
   const [jobs, setJobs] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedJD, setSelectedJD] = useState(null); // ⬅️ NEW: which JD to show matches for
+  const [selectedJD, setSelectedJD] = useState(null); 
   const [jdViewUrl, setJdViewUrl] = useState(null);
   const [jdModalOpen, setJdModalOpen] = useState(false);
   const [showFullJD, setShowFullJD] = useState(false);
@@ -249,9 +248,16 @@ export default function JobDescriptionsPage() {
                   </Box>
                   <Box className="jd-card-actions">
                     <Tooltip title="View Matches">
-                      <IconButton onClick={() => handleViewMatches(job.jd_id)}>
-                        <VisibilityOutlinedIcon />
-                      </IconButton>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        className="match-btn"
+                        onClick={() => {
+                          handleViewMatches(job.jd_id);
+                        }}
+                      >
+                        Matches
+                      </Button>
                     </Tooltip>
 
                     <Tooltip title="Delete Job Description">

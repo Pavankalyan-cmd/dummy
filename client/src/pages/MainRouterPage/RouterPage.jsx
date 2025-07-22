@@ -1,8 +1,6 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-
-
 import CandidatesPage from "../CandidatesPage/CandidatesPage";
 import JobDescriptionsPage from "../JobDescriptionsPage/JobDescriptionsPage";
 import TopMatchesPage from "../TopMatchesPage/TopMatchesPage";
@@ -17,10 +15,8 @@ export default function Routespage() {
       <ToastContainer />
 
       <Routes>
-        {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* Protected Routes under Layout */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Layout />}>
             <Route index element={<CandidatesPage />} />
@@ -29,8 +25,6 @@ export default function Routespage() {
             <Route path="job-descriptions" element={<JobDescriptionsPage />} />
             <Route path="top-matches" element={<TopMatchesPage />} />
             <Route path="integrations" element={<Integrations/>}/>
-            {/* You can add settings route here if needed */}
-            {/* <Route path="settings" element={<SettingsPage />} /> */}
           </Route>
         </Route>
       </Routes>

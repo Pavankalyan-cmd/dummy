@@ -9,7 +9,7 @@ export default function Integrations() {
     <Box
       sx={{
         minHeight: "100vh",
-    
+
         py: 8,
       }}
     >
@@ -53,7 +53,7 @@ export default function Integrations() {
                   ":hover": { backgroundColor: "#4c1caa" },
                 }}
               >
-                Connect Dayforce
+                loading...
               </Button>
             </Paper>
           </Grid>
@@ -77,7 +77,7 @@ export default function Integrations() {
                   ":hover": { backgroundColor: "#4c1caa" },
                 }}
               >
-                Connect Workday
+                loading...
               </Button>
             </Paper>
           </Grid>

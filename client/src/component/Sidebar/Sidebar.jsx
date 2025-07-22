@@ -35,8 +35,7 @@ export default function Sidebar({ onToggle, collapsed }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear session, tokens, etc. here
-    // localStorage.removeItem("token");
+  
     navigate("/");
   };
 
@@ -44,7 +43,7 @@ export default function Sidebar({ onToggle, collapsed }) {
     <Box
       className={`sidebar-root ${collapsed ? "collapsed" : ""}`}
       sx={{
-        width: collapsed ? "70px" : "240px",
+        width: collapsed ? "70px" : "40px",
         transition: "width 0.3s ease",
         overflowX: "hidden",
       }}
