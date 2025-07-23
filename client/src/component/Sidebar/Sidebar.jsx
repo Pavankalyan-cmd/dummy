@@ -17,6 +17,7 @@ import MenuOpenIcon from "@mui/icons-material/ViewSidebarOutlined";
 import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import { NavLink, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
+import slickbit from "../../assets/image/slickbit.png";
 
 const navItems = [
   { label: "Candidates", icon: <PeopleIcon />, path: "candidates" },
@@ -29,6 +30,7 @@ const navItems = [
 
 const settingsItems = [
   { label: "Integrations", icon: <SettingsIcon />, path: "integrations" },
+  { label: "Score", icon: <SettingsIcon />, path: "score" },
 ];
 
 export default function Sidebar({ onToggle, collapsed }) {
@@ -152,6 +154,14 @@ export default function Sidebar({ onToggle, collapsed }) {
 
       {/* Bottom Toggle */}
       <Box className="sidebar-bottom">
+        {!collapsed && (
+          <img
+            src={slickbit}
+            alt="Slickbit Logo"
+            className="sidebar-slickbit-logo"
+          />
+        )}
+
         <Tooltip title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <IconButton onClick={onToggle} className="sidebar-toggle-btn">
             <MenuOpenIcon

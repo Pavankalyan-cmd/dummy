@@ -10,6 +10,8 @@ import {
   Tooltip,
   Modal,
   Backdrop,
+  Skeleton,
+  CircularProgress,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
@@ -29,11 +31,10 @@ export default function JobDescriptionsPage() {
   const [jobs, setJobs] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedJD, setSelectedJD] = useState(null); 
+  const [selectedJD, setSelectedJD] = useState(null);
   const [jdViewUrl, setJdViewUrl] = useState(null);
   const [jdModalOpen, setJdModalOpen] = useState(false);
   const [showFullJD, setShowFullJD] = useState(false);
-
 
   const hasFetched = useRef(false);
 
@@ -89,18 +90,17 @@ export default function JobDescriptionsPage() {
   };
 
   const handleViewMatches = (jd_id) => {
-    setSelectedJD(jd_id); 
+    setSelectedJD(jd_id);
   };
 
   const handleBackFromMatches = () => {
-    setSelectedJD(null); 
+    setSelectedJD(null);
   };
 
   return (
     <Box className="jd-root">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* If a JD is selected, show TopMatchesPage instead of JD List */}
       {selectedJD ? (
         <TopMatchesPage jd_id={selectedJD} onBack={handleBackFromMatches} />
       ) : (
@@ -117,7 +117,7 @@ export default function JobDescriptionsPage() {
             </Box>
           </Box>
 
-          {/* Controls Row */}
+          {/* Controls */}
           <Box className="jd-controls">
             <Button
               variant="outlined"
@@ -143,6 +143,7 @@ export default function JobDescriptionsPage() {
             >
               {loading ? "Uploading..." : "Submit"}
             </Button>
+
             {selectedFiles.length > 0 && (
               <Box mt={1} sx={{ maxHeight: 100, overflowY: "auto" }}>
                 {selectedFiles.map((file, idx) => (
@@ -164,6 +165,8 @@ export default function JobDescriptionsPage() {
               </Box>
             )}
           </Box>
+
+          {/* Count Row */}
           <Box className="candidates-count-row">
             <Typography variant="body2" className="candidates-count">
               Showing <b>{jobs.length}</b> of <b>{jobs.length}</b> Job
@@ -171,122 +174,166 @@ export default function JobDescriptionsPage() {
             </Typography>
           </Box>
 
-          {/* Job Cards */}
+          {/* JD Cards */}
           <Box className="jd-list">
-            {jobs.length === 0 && !loading && (
+            {loading ? (
+              Array.from({ length: 3 }).map((_, idx) => (
+                <Card key={idx} className="jd-card" elevation={0}>
+                  <CardContent className="jd-card-content">
+                    <Box className="jd-card-main">
+                      <Skeleton variant="text" width="50%" height={28} />
+                      <Skeleton variant="text" width="30%" height={20} />
+                      <Skeleton
+                        variant="text"
+                        width="100%"
+                        height={60}
+                        sx={{ my: 1 }}
+                      />
+                      <Box
+                        className="jd-req-tags"
+                        sx={{ display: "flex", gap: 1 }}
+                      >
+                        <Skeleton
+                          variant="rectangular"
+                          width={80}
+                          height={30}
+                        />
+                        <Skeleton
+                          variant="rectangular"
+                          width={80}
+                          height={30}
+                        />
+                        <Skeleton
+                          variant="rectangular"
+                          width={80}
+                          height={30}
+                        />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))
+            ) : jobs.length === 0 ? (
               <Typography variant="body2" sx={{ mt: 2 }}>
                 No job descriptions found.
               </Typography>
-            )}
+            ) : (
+              jobs.map((job, idx) => (
+                <Card key={job.jd_id || idx} className="jd-card" elevation={0}>
+                  <CardContent className="jd-card-content">
+                    <Box className="jd-card-main">
+                      <Box className="jd-card-header">
+                        <Typography
+                          variant="subtitle1"
+                          className="jd-job-title"
+                        >
+                          <b>{job.jobtitle}</b>
+                        </Typography>
+                        {job.company && (
+                          <Typography
+                            variant="body2"
+                            className="jd-meta-item"
+                            sx={{ color: "#888" }}
+                          >
+                            {job.company}
+                          </Typography>
+                        )}
+                      </Box>
 
-            {jobs.map((job, idx) => (
-              <Card key={job.jd_id || idx} className="jd-card" elevation={0}>
-                <CardContent className="jd-card-content">
-                  <Box className="jd-card-main">
-                    <Box className="jd-card-header">
-                      <Typography variant="subtitle1" className="jd-job-title">
-                        <b>{job.jobtitle}</b>
+                      <Box className="jd-card-meta">
+                        <Typography variant="body2" className="jd-meta-item">
+                          {job.location || "Location not specified"}
+                        </Typography>
+                        <Typography variant="body2" className="jd-meta-item">
+                          {job.salary_range || "Salary not specified"}
+                        </Typography>
+                      </Box>
+
+                      <Typography variant="body2" className="jd-desc">
+                        {showFullJD
+                          ? job.description
+                          : `${job.description.slice(0, 200)}${
+                              job.description.length > 200 ? "..." : ""
+                            }`}
                       </Typography>
-                      {job.company && (
+
+                      {job.description.length > 200 && (
                         <Typography
                           variant="body2"
-                          className="jd-meta-item"
-                          sx={{ color: "#888" }}
+                          sx={{
+                            color: "primary.main",
+                            cursor: "pointer",
+                            mt: 0.5,
+                          }}
+                          onClick={() => setShowFullJD(!showFullJD)}
                         >
-                          {job.company}
+                          {showFullJD ? "Show less" : "Show more"}
                         </Typography>
                       )}
-                    </Box>
 
-                    <Box className="jd-card-meta">
-                      <Typography variant="body2" className="jd-meta-item">
-                        {job.location || "Location not specified"}
-                      </Typography>
-                      <Typography variant="body2" className="jd-meta-item">
-                        {job.salary_range || "Salary not specified"}
-                      </Typography>
-                    </Box>
-
-                    <Typography variant="body2" className="jd-desc">
-                      {showFullJD
-                        ? job.description
-                        : `${job.description.slice(0, 200)}${
-                            job.description.length > 200 ? "..." : ""
-                          }`}
-                    </Typography>
-
-                    {job.description.length > 200 && (
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: "primary.main",
-                          cursor: "pointer",
-                          mt: 0.5,
-                        }}
-                        onClick={() => setShowFullJD(!showFullJD)}
-                      >
-                        {showFullJD ? "Show less" : "Show more"}
-                      </Typography>
-                    )}
-
-                    <Box className="jd-req-row">
-                      <Typography variant="body2" className="jd-req-label">
-                        <p>Key Requirements:</p>
-                      </Typography>
-                      <Box className="jd-req-tags">
-                        {job.required_experience && (
-                          <Chip
-                            label={job.required_experience}
-                            className="jd-req-tag"
-                          />
-                        )}
-                        {job.required_skills?.map((skill, i) => (
-                          <Chip key={i} label={skill} className="jd-req-tag" />
-                        ))}
+                      <Box className="jd-req-row">
+                        <Typography variant="body2" className="jd-req-label">
+                          <p>Key Requirements:</p>
+                        </Typography>
+                        <Box className="jd-req-tags">
+                          {job.required_experience && (
+                            <Chip
+                              label={job.required_experience}
+                              className="jd-req-tag"
+                            />
+                          )}
+                          {job.required_skills?.map((skill, i) => (
+                            <Chip
+                              key={i}
+                              label={skill}
+                              className="jd-req-tag"
+                            />
+                          ))}
+                        </Box>
                       </Box>
                     </Box>
-                  </Box>
-                  <Box className="jd-card-actions">
-                    <Tooltip title="View Matches">
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        className="match-btn"
-                        onClick={() => {
-                          handleViewMatches(job.jd_id);
-                        }}
-                      >
-                        Matches
-                      </Button>
-                    </Tooltip>
 
-                    <Tooltip title="Delete Job Description">
-                      <IconButton onClick={() => handleDeleteJD(job.jd_id)}>
-                        <DeleteOutlineOutlinedIcon />
-                      </IconButton>
-                    </Tooltip>
+                    <Box className="jd-card-actions">
+                      <Tooltip title="View Matches">
+                        <Button
+                          variant="outlined"
+                          className="match-btn"
+                          onClick={() => handleViewMatches(job.jd_id)}
+                        >
+                          Matches
+                        </Button>
+                      </Tooltip>
 
-                    <Tooltip title="View JD File">
-                      <IconButton
-                        onClick={() => {
-                          if (job.jd_url) {
-                            setJdViewUrl(job.jd_url);
-                            setJdModalOpen(true);
-                          } else {
-                            toast.warn("No JD file available.");
-                          }
-                        }}
-                      >
-                        <DescriptionOutlinedIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
+                      <Tooltip title="Delete Job Description">
+                        <IconButton onClick={() => handleDeleteJD(job.jd_id)}>
+                          <DeleteOutlineOutlinedIcon />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="View JD File">
+                        <IconButton
+                          onClick={() => {
+                            if (job.jd_url) {
+                              setJdViewUrl(job.jd_url);
+                              setJdModalOpen(true);
+                            } else {
+                              toast.warn("No JD file available.");
+                            }
+                          }}
+                        >
+                          <DescriptionOutlinedIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </Box>
         </>
       )}
+
+      {/* JD Modal */}
       <Modal
         open={jdModalOpen}
         onClose={() => setJdModalOpen(false)}
@@ -320,6 +367,16 @@ export default function JobDescriptionsPage() {
           )}
         </Box>
       </Modal>
+
+      {/* Backdrop Loader */}
+      {loading && (
+        <Backdrop
+          open={true}
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, color: "#fff" }}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      )}
     </Box>
   );
 }

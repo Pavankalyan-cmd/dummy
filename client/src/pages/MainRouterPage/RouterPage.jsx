@@ -8,6 +8,7 @@ import Layout from "../Layout/Layout";
 import LandingPage from "../LandingPage/LandingPage";
 import ProtectedRoute from "../../component/Sidebar/ProtectedRoute";
 import Integrations from "../IntegrationsPage/Integrations";
+import WeightEditor from "../WeightEditor/WeightEditor";
 
 export default function Routespage() {
   return (
@@ -25,6 +26,7 @@ export default function Routespage() {
             <Route path="job-descriptions" element={<JobDescriptionsPage />} />
             <Route path="top-matches" element={<TopMatchesPage />} />
             <Route path="integrations" element={<Integrations/>}/>
+            <Route path="score" element={<WeightEditor/>}/>
           </Route>
         </Route>
       </Routes>

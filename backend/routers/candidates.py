@@ -15,6 +15,7 @@ from storage.azure import upload_resume_to_azure,delete_resume_from_azure
 from llmservices.topscore_gemini import analyze_multiple_resumes_structured
 from services.scoring import calculate_total_score
 from storage.firestore import save_candidate_topscore_to_firestore
+from services.scoring import initialize_user_weights
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -49,9 +50,11 @@ class Candidate(BaseModel):
 async def candidate_resumes(
     request: Request,
     resumes: List[UploadFile] = File(...)
-):
+):  
+    print(resumes)
     uid = verify_firebase_token(request)
     results = []
+    initialize_user_weights(uid)
 
     for resume in resumes:
         try:
@@ -156,7 +159,9 @@ async def candidate_resumes(
             for jd_id, jd_data in matching_jds:
                 scored = analyze_multiple_resumes_structured(jd_data, [candidate_dict])
                 for s in scored:
-                    s["total_score"] = calculate_total_score(s)
+                    score_result = calculate_total_score(s, uid)
+                    s["total_score"] = score_result["total_score"]
+                    s["score_breakdown"] = score_result["breakdown"]
                 for candidate in scored:
                     save_candidate_topscore_to_firestore(uid=uid, jd_id=jd_id, candidate=candidate)
 

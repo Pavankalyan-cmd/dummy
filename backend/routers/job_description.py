@@ -15,6 +15,7 @@ from google.genai.types import GenerateContentConfig,Part
 from  services.scoring import calculate_total_score
 from storage.firestore import save_topscore_results_to_firestore
 from llmservices.topscore_gemini import analyze_multiple_resumes_structured
+from services.scoring import initialize_user_weights
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -45,6 +46,7 @@ async def upload_multiple_jds(
 ):
     uid = verify_firebase_token(request)
     results = []
+    initialize_user_weights(uid)
 
     for jd_file in jd_files:
         try:
@@ -161,7 +163,9 @@ async def upload_multiple_jds(
                 topscore_results = analyze_multiple_resumes_structured(jd_dict, filtered_candidates)
 
                 for candidate in topscore_results:
-                    candidate["total_score"] = calculate_total_score(candidate)
+                        result = calculate_total_score(candidate, uid)
+                        candidate["total_score"] = result["total_score"]
+                        candidate["score_breakdown"] = result["breakdown"]
 
                 save_topscore_results_to_firestore(uid=uid, jd_id=jd_id, topscore_results=topscore_results)
             else:

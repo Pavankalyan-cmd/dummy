@@ -121,3 +121,8 @@
 .sidebar-root.collapsed .sidebar-list-text {
   display: none;
 }
+.sidebar-slickbit-logo {
+  width: 100px;
+  height: auto;
+  margin-bottom: 8px;
+}

@@ -174,3 +174,46 @@ export const getTopScoreCandidates = async (jd_id) => {
   console.log(response.data)
   return response.data;
 };
+
+
+
+export const fetchUserWeights = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) throw new Error("User not authenticated");
+
+  const idToken = await user.getIdToken();
+
+  const response = await axios.get(`${API_BASE}/api/user-weights`, {
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+    },
+  });
+  
+
+  console.log(response.data)
+  return response.data;
+};
+
+
+export const updateUserWeights = async (role, newWeights) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) throw new Error("User not authenticated");
+
+  const idToken = await user.getIdToken();
+
+  const response = await axios.put(
+    `${API_BASE}/api/user-weights/${role}`,
+    { weights: newWeights },
+    {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    }
+  );
+
+  return response.data;
+};

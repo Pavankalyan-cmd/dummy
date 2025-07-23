@@ -8,20 +8,27 @@ import {
   Avatar,
   Chip,
   IconButton,
-
   Modal,
   Backdrop,
-  Tooltip
+  Tooltip,
+  Skeleton,
+  CircularProgress,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { toast } from "react-toastify";
-import { candidateResume, getCandidateResumes,deleteCandidate } from "../services/services";
+import {
+  candidateResume,
+  getCandidateResumes,
+  deleteCandidate,
+} from "../services/services";
 import "./CandidatesPage.css";
+
 export default function CandidatesPage() {
   const [resumeFiles, setResumeFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState([]);
   const hasFetched = useRef(false);
   const [openModal, setOpenModal] = useState(false);
@@ -29,25 +36,28 @@ export default function CandidatesPage() {
   const [showFull, setShowFull] = useState(false);
   const fileInputRef = useRef(null);
 
-
   const toggleShow = () => setShowFull((prev) => !prev);
-
 
   useEffect(() => {
     if (hasFetched.current) return;
     hasFetched.current = true;
+
     const fetchCandidates = async () => {
       try {
+        setLoading(true);
         const data = await getCandidateResumes();
         setCandidates(data);
       } catch (err) {
         console.error("Failed to fetch resumes:", err);
         toast.error("Failed to fetch candidates.");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchCandidates();
   }, []);
+
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this candidate?"))
       return;
@@ -61,7 +71,6 @@ export default function CandidatesPage() {
       console.error(err);
     }
   };
-
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -83,10 +92,8 @@ export default function CandidatesPage() {
 
       const updated = await getCandidateResumes();
       setCandidates(updated);
-      setResumeFiles([]); 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""; 
-      }
+      setResumeFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Upload failed. Check console for details.");
@@ -134,6 +141,7 @@ export default function CandidatesPage() {
         >
           {uploading ? "Uploading..." : "Submit"}
         </Button>
+
         {resumeFiles.length > 0 && (
           <Box mt={1} sx={{ maxHeight: 100, overflowY: "auto" }}>
             {resumeFiles.map((file, idx) => (
@@ -164,101 +172,137 @@ export default function CandidatesPage() {
       </Box>
 
       <Box className="candidates-list">
-        {candidates.map((c) => (
-          <Card
-            key={c.candidate_id || c.id || c.name}
-            className="candidate-card"
-            elevation={0}
-          >
-            <CardContent className="candidate-card-content">
-              <Avatar className="candidate-avatar">
-                {c.name
-                  ?.split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </Avatar>
-              <Box className="candidate-info">
-                <Box className="candidate-header">
-                  <Typography variant="subtitle1" className="candidate-name">
-                    <b>{c.name}</b>
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="body1"
-                  className="candidate-role"
-                  sx={{ fontWeight: 600, color: "#2563eb" }}
-                >
-                  {c.designation}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  className="candidate-desc"
-                  sx={{
-                    overflow: "hidden",
-                    display: "-webkit-box",
-                    WebkitLineClamp: showFull ? "unset" : 2,
-                    WebkitBoxOrient: "vertical",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {c.professional_summary}
-                </Typography>
-
-                {c.professional_summary?.length > 150 && (
-                  <Typography
-                    variant="body2"
-                    color="primary"
-                    sx={{ cursor: "pointer", mt: 0.5 }}
-                    onClick={toggleShow}
-                  >
-                    {showFull ? "Show less" : "Show more"}
-                  </Typography>
-                )}
-                <Box className="candidate-meta">
-                  <Typography variant="body2" className="candidate-meta-item">
-                    {c.email}
-                  </Typography>
-                  <Typography variant="body2" className="candidate-meta-item">
-                    {c.contact_number}
-                  </Typography>
-                  <Typography variant="body2" className="candidate-meta-item">
-                    {c.location || c.Location}
-                  </Typography>
-                </Box>
-                <Box className="candidate-tags">
-                  {c.technical_skills?.map((tag) => (
-                    <Chip key={tag} label={tag} className="candidate-tag" />
-                  ))}
-                </Box>
-                <Typography variant="body2" className="candidate-education">
-                  <b>Education:</b> {c.education?.[0]?.degree} –{" "}
-                  {c.education?.[0]?.institution}
-                </Typography>
-              </Box>
-              <Box className="candidate-score-col">
-                <Box className="candidate-actions">
-                  <Tooltip title="View Resume" arrow>
-                    <IconButton
-                      onClick={() => {
-                        setSelectedResumeUrl(c.resume_url);
-                        setOpenModal(true);
+        {loading || uploading
+          ? Array.from({ length: 3 }).map((_, idx) => (
+              <Card
+                key={`skeleton-${idx}`}
+                className="candidate-card"
+                elevation={0}
+              >
+                <CardContent className="candidate-card-content">
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box className="candidate-info" sx={{ width: "100%", ml: 2 }}>
+                    <Skeleton variant="text" width="40%" height={28} />
+                    <Skeleton variant="text" width="60%" height={20} />
+                    <Skeleton
+                      variant="rectangular"
+                      width="100%"
+                      height={60}
+                      sx={{ mt: 1 }}
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            ))
+          : candidates.map((c) => (
+              <Card
+                key={c.candidate_id || c.id || c.name}
+                className="candidate-card"
+                elevation={0}
+              >
+                <CardContent className="candidate-card-content">
+                  <Avatar className="candidate-avatar">
+                    {c.name
+                      ?.split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </Avatar>
+                  <Box className="candidate-info">
+                    <Box className="candidate-header">
+                      <Typography
+                        variant="subtitle1"
+                        className="candidate-name"
+                      >
+                        <b>{c.name}</b>
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body1"
+                      className="candidate-role"
+                      sx={{ fontWeight: 600, color: "#2563eb" }}
+                    >
+                      {c.designation}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      className="candidate-desc"
+                      sx={{
+                        overflow: "hidden",
+                        display: "-webkit-box",
+                        WebkitLineClamp: showFull ? "unset" : 2,
+                        WebkitBoxOrient: "vertical",
+                        textOverflow: "ellipsis",
                       }}
                     >
-                      <DescriptionOutlinedIcon />
-                    </IconButton>
-                  </Tooltip>
+                      {c.professional_summary}
+                    </Typography>
+                    {c.professional_summary?.length > 150 && (
+                      <Typography
+                        variant="body2"
+                        color="primary"
+                        sx={{ cursor: "pointer", mt: 0.5 }}
+                        onClick={toggleShow}
+                      >
+                        {showFull ? "Show less" : "Show more"}
+                      </Typography>
+                    )}
+                    <Box className="candidate-meta">
+                      <Typography
+                        variant="body2"
+                        className="candidate-meta-item"
+                      >
+                        {c.email}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        className="candidate-meta-item"
+                      >
+                        {c.contact_number}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        className="candidate-meta-item"
+                      >
+                        {c.location || c.Location}
+                      </Typography>
+                    </Box>
+                    <Box className="candidate-tags">
+                      {c.technical_skills?.map((tag) => (
+                        <Chip key={tag} label={tag} className="candidate-tag" />
+                      ))}
+                    </Box>
+                    <Typography variant="body2" className="candidate-education">
+                      <b>Education:</b> {c.education?.[0]?.degree} –{" "}
+                      {c.education?.[0]?.institution}
+                    </Typography>
+                  </Box>
+                  <Box className="candidate-score-col">
+                    <Box className="candidate-actions">
+                      <Tooltip title="View Resume" arrow>
+                        <IconButton
+                          onClick={() => {
+                            setSelectedResumeUrl(c.resume_url);
+                            setOpenModal(true);
+                          }}
+                        >
+                          <DescriptionOutlinedIcon />
+                        </IconButton>
+                      </Tooltip>
 
-                  <Tooltip title="Delete Candidate" arrow>
-                    <IconButton onClick={() => handleDelete(c.candidate_id)}>
-                      <DeleteOutlineOutlinedIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
+                      <Tooltip title="Delete Candidate" arrow>
+                        <IconButton
+                          onClick={() => handleDelete(c.candidate_id)}
+                        >
+                          <DeleteOutlineOutlinedIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
       </Box>
+
       <Modal
         open={openModal}
         onClose={() => setOpenModal(false)}
@@ -292,6 +336,15 @@ export default function CandidatesPage() {
           )}
         </Box>
       </Modal>
+
+      {uploading && (
+        <Backdrop
+          open={true}
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, color: "#fff" }}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      )}
     </Box>
   );
 }
