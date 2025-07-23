@@ -58,7 +58,7 @@ def initialize_user_weights(uid: str):
     if not any(existing_weights): 
         default_weights = {
             "fresher": {"skills": 40, "education": 30, "certifications": 20, "experience": 10},
-            "mid_professional": {"skills": 35, "education": 25, "certifications": 15, "experience": 25},
+            "mid_level_professional": {"skills": 35, "education": 25, "certifications": 15, "experience": 25},
             "senior_engineer": {"skills": 30, "education": 20, "certifications": 10, "experience": 40},
         }
 
@@ -68,6 +68,4 @@ def initialize_user_weights(uid: str):
                 "weights": weights
             })
 
-        print(f"Initialized score weights for new user: {uid}")
-    else:
-        print(f"Score weights already exist for user: {uid}")
+    

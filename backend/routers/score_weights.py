@@ -15,7 +15,6 @@ class WeightUpdateRequest(BaseModel):
 @router.get("/user-weights")
 def get_user_weights(request: Request):
     uid = verify_firebase_token(request)
-    print(uid,"at get function")
     weights_ref = db.collection("users").document(uid).collection("score_weights")
     weights_docs = weights_ref.stream()
 
@@ -26,7 +25,6 @@ def get_user_weights(request: Request):
         weights = data.get("weights")
         if role and weights:
             user_weights[role] = weights
-    print(user_weights)    
 
     return { "weights": user_weights}
 

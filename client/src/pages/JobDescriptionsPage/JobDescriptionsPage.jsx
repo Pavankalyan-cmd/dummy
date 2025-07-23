@@ -16,7 +16,7 @@ import {
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-
+import CloseIcon from "@mui/icons-material/Close";
 import {
   getJobDescriptions,
   uploadJobDescriptions,
@@ -354,6 +354,18 @@ export default function JobDescriptionsPage() {
             p: 2,
           }}
         >
+          <IconButton
+            onClick={() => setJdModalOpen(false)}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              zIndex: 1,
+              color: "grey.700",
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
           {jdViewUrl ? (
             <iframe
               src={jdViewUrl}

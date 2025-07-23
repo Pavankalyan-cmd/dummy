@@ -17,6 +17,8 @@ import {
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import CloseIcon from "@mui/icons-material/Close";
+
 import { toast } from "react-toastify";
 import {
   candidateResume,
@@ -48,7 +50,6 @@ export default function CandidatesPage() {
         const data = await getCandidateResumes();
         setCandidates(data);
       } catch (err) {
-        console.error("Failed to fetch resumes:", err);
         toast.error("Failed to fetch candidates.");
       } finally {
         setLoading(false);
@@ -68,7 +69,6 @@ export default function CandidatesPage() {
       setCandidates((prev) => prev.filter((c) => c.candidate_id !== id));
     } catch (err) {
       toast.error("Failed to delete candidate.");
-      console.error(err);
     }
   };
 
@@ -95,7 +95,6 @@ export default function CandidatesPage() {
       setResumeFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
-      console.error("Upload failed:", error);
       toast.error("Upload failed. Check console for details.");
     } finally {
       setUploading(false);
@@ -323,6 +322,18 @@ export default function CandidatesPage() {
             p: 2,
           }}
         >
+          <IconButton
+            onClick={() => setOpenModal(false)}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              zIndex: 1,
+              color: "grey.700",
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
           {selectedResumeUrl ? (
             <iframe
               src={selectedResumeUrl}

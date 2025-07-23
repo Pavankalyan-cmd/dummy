@@ -157,13 +157,16 @@ async def upload_multiple_jds(
                 candidate_skills = c.get("technical_skills", [])
                 if has_skill_overlap(jd_skills, candidate_skills, min_overlap=1):
                     filtered_candidates.append(c)
+   
 
 
             if filtered_candidates:
                 topscore_results = analyze_multiple_resumes_structured(jd_dict, filtered_candidates)
+     
 
                 for candidate in topscore_results:
                         result = calculate_total_score(candidate, uid)
+    
                         candidate["total_score"] = result["total_score"]
                         candidate["score_breakdown"] = result["breakdown"]
 

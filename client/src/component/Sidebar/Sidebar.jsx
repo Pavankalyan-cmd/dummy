@@ -18,6 +18,7 @@ import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import { NavLink, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 import slickbit from "../../assets/image/slickbit.png";
+import TuneIcon from "@mui/icons-material/Tune";
 
 const navItems = [
   { label: "Candidates", icon: <PeopleIcon />, path: "candidates" },
@@ -30,7 +31,7 @@ const navItems = [
 
 const settingsItems = [
   { label: "Integrations", icon: <SettingsIcon />, path: "integrations" },
-  { label: "Score", icon: <SettingsIcon />, path: "score" },
+  { label: "Scoring Configuration", icon: <TuneIcon/>, path: "score" },
 ];
 
 export default function Sidebar({ onToggle, collapsed }) {

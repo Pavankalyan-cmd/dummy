@@ -51,7 +51,6 @@ async def candidate_resumes(
     request: Request,
     resumes: List[UploadFile] = File(...)
 ):  
-    print(resumes)
     uid = verify_firebase_token(request)
     results = []
     initialize_user_weights(uid)

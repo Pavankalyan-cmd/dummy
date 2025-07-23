@@ -110,13 +110,13 @@ Scoring Criteria for each category (0–100):
 4. **Certifications (0–100)**  
 - Evaluate relevance and validity of certifications to the role  
 - Score based on match and industry recognition
-5. Classify each candidate as either a "fresher" or a "senior_engineer" or "mid-level professional based on their total years of experience:
+5. Classify each candidate as either a "fresher" or a "senior_engineer" or "mid_level_professional based on their total years of experience:
 
-If the candidate has less than 2 years of experience, classify profile_type as "fresher".
+If the candidate has less than 1 year of experience, classify profile_type as "fresher".
 
 If the candidate has 4 or more years of experience, classify profile_type as "senior_engineer".
 
-If experience is between 2 and 4 years,  classify profile_type as "mid-level professional"
+If experience is between 2 and 4 years,  classify profile_type as "mid_level_professional"
 6. Return a field called "skills_matched" which lists all the technical skills that are present in both the job description and the candidate's resume. Only include exact or highly relevant matches (e.g.,
  "Python" in both counts as a match; "Java" vs "JavaScript" does not). Do not infer skills not clearly mentioned in the resume.
 
