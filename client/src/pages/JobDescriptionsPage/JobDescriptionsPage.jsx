@@ -97,6 +97,26 @@ export default function JobDescriptionsPage() {
     setSelectedJD(null);
   };
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+
+    if (files.length > 2) {
+      toast.warning("You can upload a maximum of 2 PDF files.");
+      return;
+    }
+
+    const invalidFiles = files.filter(
+      (file) => file.type !== "application/pdf"
+    );
+
+    if (invalidFiles.length > 0) {
+      toast.warning("Only PDF files are allowed.");
+      return;
+    }
+
+    setSelectedFiles(files);
+  };
+
   return (
     <Box className="jd-root">
       <ToastContainer position="top-right" autoClose={3000} />
@@ -125,13 +145,13 @@ export default function JobDescriptionsPage() {
               startIcon={<CloudUploadIcon />}
               className="upload-jd-btn"
             >
-              Upload JD
+              Upload JD (PDF Only, Max 2)
               <input
                 type="file"
                 hidden
                 multiple
-                accept=".pdf,.doc,.docx"
-                onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
+                accept=".pdf"
+                onChange={handleFileChange}
               />
             </Button>
 

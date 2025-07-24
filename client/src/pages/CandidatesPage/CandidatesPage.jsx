@@ -74,6 +74,21 @@ export default function CandidatesPage() {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
+
+    if (files.length > 2) {
+      toast.warning("You can upload a maximum of 2 files.");
+      return;
+    }
+
+    const invalidFiles = files.filter(
+      (file) => file.type !== "application/pdf"
+    );
+
+    if (invalidFiles.length > 0) {
+      toast.warning("Only PDF files are allowed.");
+      return;
+    }
+
     setResumeFiles(files);
   };
 
@@ -121,12 +136,12 @@ export default function CandidatesPage() {
           startIcon={<CloudUploadIcon />}
           className="upload-btn"
         >
-          Upload File(s)
+          Upload PDF (Max 2)
           <input
             type="file"
             hidden
             multiple
-            accept=".pdf,.doc,.docx"
+            accept=".pdf"
             onChange={handleFileChange}
             ref={fileInputRef}
           />
