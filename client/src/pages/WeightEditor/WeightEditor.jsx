@@ -23,7 +23,7 @@ const WeightEditor = () => {
   useEffect(() => {
     const loadWeights = async () => {
       try {
-        const response = await fetchUserWeights(); // { weights: {...} }
+        const response = await fetchUserWeights(); 
         setWeightsData(response.weights || {});
         setSelectedRole("fresher");
         setCurrentWeights(response.weights?.fresher || {});
